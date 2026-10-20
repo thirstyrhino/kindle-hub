@@ -22,7 +22,7 @@ OUT = ROOT / "docs" / "images"
 TMP = ROOT / "build" / "docs"
 SCREENS = [("morning_brief", "Morning brief", "05:30–10:00"),
            ("weather_aqi", "Weather & air", "10:00–13:00 · evenings"),
-           ("markets", "Markets", "13:00–16:00"),
+           ("markets", "Markets", "09:15–15:30 · weekdays"),
            ("quarter_progress", "Quarter progress", "evenings"),
            ("year_of_the_day", "Year of the day", "11:00 · overnight")]
 HERO = ["morning_brief", "weather_aqi", "quarter_progress", "year_of_the_day"]  # 4 fit the README width

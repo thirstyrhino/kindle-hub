@@ -1,9 +1,10 @@
 """AI morning brief: headlines from your feeds + weather + markets, written up by an OpenRouter model.
 
-Runs the model once a day ("full" mode). Hourly refreshes reuse today's brief from the live site.
+Written by the model at 05:47 ("full" mode), then again on the hourly refreshes whenever the last
+brief is `refresh_hours` old (plugin.yaml, default 3). Other refreshes reuse it from the live site.
 If the model is unavailable, a plain brief is built from the headlines so the Kindle never goes blank.
 """
-from datetime import date
+from datetime import date, datetime
 from email.utils import format_datetime
 from pathlib import Path
 
@@ -112,13 +113,31 @@ def _fallback(headlines, weather, want):
     }
 
 
+SLACK_MINUTES = 20   # scheduled runs drift; a brief this close to refresh_hours old counts as due
+
+
+def _age_minutes(ctx, prev: dict) -> float | None:
+    """Minutes since a published brief was written (older briefs only have date + generated_at)."""
+    ts = prev.get("generated_epoch")
+    if ts is None:
+        try:
+            ts = datetime.strptime(f"{prev['date']} {prev['generated_at']}", "%Y-%m-%d %H:%M") \
+                .replace(tzinfo=ctx.now.tzinfo).timestamp()
+        except (KeyError, TypeError, ValueError):
+            return None
+    return (ctx.now.timestamp() - float(ts)) / 60
+
+
 def fetch(ctx):
     if ctx.mode == "refresh":
         prev = ctx.previous_json("data/morning_brief.json")
-        if prev and prev.get("date") == ctx.today:
-            ctx.log("morning_brief: reusing today's brief")
+        hours = float(ctx.settings.get("refresh_hours", 3) or 0)
+        age = _age_minutes(ctx, prev) if prev and prev.get("date") == ctx.today else None
+        if age is not None and (hours <= 0 or age < hours * 60 - SLACK_MINUTES):
+            ctx.log(f"morning_brief: reusing the brief from {prev.get('generated_at')}")
             return prev
-        ctx.log("morning_brief: no brief for today yet, generating one")
+        ctx.log("morning_brief: no brief for today yet, generating one" if age is None
+                else f"morning_brief: last brief is {age / 60:.1f} h old, writing a fresh one")
 
     headlines = collect_headlines(ctx)
     weather, markets = ctx.usable("weather_aqi"), ctx.usable("markets")
@@ -144,6 +163,7 @@ def fetch(ctx):
         "date": ctx.today,
         "date_long": ctx.now.strftime("%A, %d %B %Y"),
         "generated_at": ctx.now.strftime("%H:%M"),
+        "generated_epoch": int(ctx.now.timestamp()),
         "pub_date": format_datetime(ctx.now),
         "ai": used_ai,
         "model": model if used_ai else None,

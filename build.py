@@ -2,7 +2,7 @@
 """Build the Kindle site.
 
   python build.py                 # full run: fetch everything, write today's AI brief, render screens
-  python build.py --mode refresh  # hourly run: refresh data, reuse today's brief from the live site
+  python build.py --mode refresh  # hourly run: refresh data; new brief only when the last is 3 h old
   python build.py --demo          # no network, no API key: sample data, for trying templates locally
   python build.py --demo --at 14:10   # pretend it's 14:10 (see which screen is on air)
 """
@@ -55,7 +55,8 @@ def main() -> int:
             ctx.data[p.name] = {"available": False, "error": str(e)}
 
     jobs = [(p, ctx.data[p.name]) for p in plugins if ctx.data[p.name].get("available", True)]
-    rendered = render_pngs(ctx, jobs, site_dir / "screens") if jobs else {}
+    live: dict = {}   # screen -> boxes the Kindle draws into (the weather clock)
+    rendered = render_pngs(ctx, jobs, site_dir / "screens", live) if jobs else {}
 
     for p in plugins:
         write_data(p.name, ctx.data[p.name], site_dir)
@@ -73,7 +74,7 @@ def main() -> int:
     else:
         ctx.log("nothing rendered; the Kindle keeps its last screen")
     write_index(ctx, plugins, rendered, on_air, site_dir)
-    write_screens_list(ctx, plugins, rendered, on_air, site_dir)
+    write_screens_list(ctx, plugins, rendered, on_air, site_dir, live)
     write_data("_diagnostics", {"built": ctx.now.strftime("%Y-%m-%d %H:%M"), "mode": ctx.mode,
                                 "secrets": {k: bool(os.environ.get(k)) for k in
                                             ["OPENROUTER_API_KEY", "CLOUDFLARE_ACCOUNT_ID", "CLOUDFLARE_API_TOKEN"]},
@@ -93,7 +94,8 @@ def write_run_summary(ctx, plugins, rendered, on_air) -> None:
         if p.name not in rendered:
             result = f"skipped: {d.get('error', 'no data')}"[:160]
         elif p.name == "morning_brief":
-            result = f"AI brief by `{d['model']}`" if d.get("ai") else "headlines only (AI unavailable or no key)"
+            result = (f"AI brief by `{d['model']}`" if d.get("ai") else "headlines only (AI unavailable or no key)") \
+                + (f", written {d['generated_at']}" if d.get("generated_at") else "")
         elif p.name == "year_of_the_day":
             result = (f"{d['mode']} illustration" if d.get("image")
                       else "text" + (" (image mode set, but no Cloudflare keys or the image failed)"

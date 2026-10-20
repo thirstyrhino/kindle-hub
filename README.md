@@ -15,13 +15,14 @@ nothing to host, nothing to keep switched on at home.
 
 - **A morning brief you read like a book.** At 05:47 IST, an AI model reads your news feeds,
   picks the stories that matter to you and writes a one-page summary with today's weather and
-  markets. KOReader downloads it as an ebook with one tap.
+  markets. KOReader downloads it as an ebook with one tap. Through the day the brief is
+  rewritten every 3 hours with the latest news.
 - **A dashboard that changes through the day.** Leave the Kindle on a stand and it shows the
-  brief in the morning, weather and air quality at midday, markets in the afternoon, and the
-  forecast and quarter progress in the evening, and a year from history overnight. It updates
-  every hour.
+  brief in the morning, weather and air quality (with the time) at midday, markets while NSE
+  is trading, the forecast and quarter progress in the evening, and a year from history
+  overnight. It updates every hour.
 - **₹0 to run.** GitHub Actions builds everything on a schedule and GitHub Pages hosts it. The
-  AI uses OpenRouter's free models (one call a day). Weather and air quality come from
+  AI uses OpenRouter's free models (about 8 calls a day). Weather and air quality come from
   Open-Meteo, which needs no key.
 - **Screens you can add yourself.** Each screen is a small folder with a data script and a
   template. Copy one, change it, push, and it joins the rotation.
@@ -30,19 +31,19 @@ nothing to host, nothing to keep switched on at home.
 
 <table>
 <tr>
-<td align="center" width="50%"><img src="docs/images/screen-morning_brief.png" width="300" alt="Morning brief screen"><br><b>Morning brief</b><br><sub>05:30–10:00 and 13:00–14:00</sub></td>
+<td align="center" width="50%"><img src="docs/images/screen-morning_brief.png" width="300" alt="Morning brief screen"><br><b>Morning brief</b><br><sub>05:30–10:00 and 13:00–14:00 · rewritten every 3 hours</sub></td>
 <td align="center" width="50%"><img src="docs/images/screen-weather_aqi.png" width="300" alt="Weather and air quality screen"><br><b>Weather &amp; air</b><br><sub>10:00–13:00 and 16:00–05:59</sub></td>
 </tr>
 <tr>
 <td valign="top">AI headline, three takeaways, the top stories that fit on screen, a weather strip and one focus for the day.</td>
-<td valign="top">Temperature now, US AQI on a scale with PM2.5 and PM10, a 4-day forecast and sunrise/sunset for Bengaluru.</td>
+<td valign="top">The time, temperature now, US AQI on a scale with PM2.5 and PM10, a 4-day forecast and sunrise/sunset for Bengaluru. On the Kindle Hub plugin the time is redrawn every minute.</td>
 </tr>
 <tr>
-<td align="center"><img src="docs/images/screen-markets.png" width="300" alt="Markets screen"><br><b>Markets</b><br><sub>13:00–16:00</sub></td>
+<td align="center"><img src="docs/images/screen-markets.png" width="300" alt="Markets screen"><br><b>Markets</b><br><sub>09:15–15:30, Mon–Fri (trading hours only)</sub></td>
 <td align="center"><img src="docs/images/screen-quarter_progress.png" width="300" alt="Quarter progress screen"><br><b>Quarter progress</b><br><sub>18:00–22:00, alternating with weather</sub></td>
 </tr>
 <tr>
-<td valign="top">Nifty 50, Sensex and USD/INR with the day's move and a one-month trend line.</td>
+<td valign="top">Nifty 50, Sensex and USD/INR with the day's move and a one-month trend line. Shown only while the market is open, never as a filler.</td>
 <td valign="top">One square per day of the quarter (passed, today, still to come), with days passed and days left. Same clean look as TRMNL's <a href="https://trmnl.com/recipes/quarter-progress-212805">Quarter Progress</a> recipe, set out for a portrait screen. Switch to April–March financial-year quarters in its <code>plugin.yaml</code>.</td>
 </tr>
 <tr>
@@ -63,7 +64,7 @@ couldn't be fetched is skipped, so the Kindle never shows an empty page.
 ```mermaid
 flowchart LR
     A["GitHub Actions<br/>05:47 IST + hourly"] -->|news, weather, markets| B["Build<br/>build.py"]
-    B -->|one call a day| C["OpenRouter<br/>free model"]
+    B -->|a brief every 3 hours| C["OpenRouter<br/>free model"]
     B -->|publish| D["GitHub Pages<br/>thirstyrhino.github.io/kindle-hub"]
     D -->|brief.xml| E["KOReader<br/>News Downloader"]
     D -->|/api/display + PNG| F["TRMNL plugin<br/>for KOReader"]
@@ -72,7 +73,7 @@ flowchart LR
 | When (IST) | What happens |
 |---|---|
 | **05:47** | Fetches feeds, weather and markets; the AI writes today's brief; screens are rendered and published. |
-| **Hourly, 06:37–23:37** | Refreshes weather and markets, reuses today's brief (no extra AI call) and picks the screen for that hour. |
+| **Hourly, 06:37–23:37** | Refreshes weather and markets and picks the screen for that hour. Reuses the brief until it's 3 hours old, then the AI writes a fresh one (08:37, 11:37, 14:37…). |
 
 GitHub sometimes starts scheduled runs 10–30 minutes late. That's fine for a dashboard that
 updates hourly.
@@ -142,8 +143,8 @@ Keep the Kindle on a charger while it's a dashboard. It checks for a new screen 
 
 ### 4. Kindle: Kindle Hub, one tap away
 
-The Kindle Hub plugin opens the screen that's on now as soon as KOReader starts, so you don't
-dig through menus.
+The Kindle Hub plugin opens your Kindle Hub dashboard (Quarter Progress, unless you choose
+another) as soon as KOReader starts, so you don't dig through menus.
 
 1. Over USB, copy [`koreader/kindlehub.koplugin`](koreader/kindlehub.koplugin) into
    `koreader/plugins/`.
@@ -151,19 +152,23 @@ dig through menus.
    rename it `kindlehub` (so it's `extensions/kindlehub/`). KUAL now has a **Kindle Hub** button.
 3. Restart KOReader.
 
-Now **Kindle home → KUAL → Kindle Hub** opens straight onto the current screen. Swipe left or
+Now **Kindle home → KUAL → Kindle Hub** opens straight onto the dashboard. Swipe left or
 right for the other screens, tap to close and you're in KOReader as usual.
 
+- **Tools → Kindle Hub → Dashboard shows:**
+  - **Quarter Progress** (default), or any other single screen;
+  - **What's on now:** follows the site's schedule through the day;
+  - **Take turns:** a new screen every 15 minutes. Markets only joins in during trading hours.
 - **Tools → Kindle Hub → Open when KOReader starts:** **Always** (default: any way you start
   KOReader), **Only from the Kindle Hub button** (KOReader's own button opens your books as
-  normal), or **Never**.
+  normal; the default when KOReader starts with Bookshelf), or **Never**.
 - **From anywhere in KOReader, one tap:** **Settings → Taps and gestures → Gesture manager →**
-  pick a corner tap → **General → Kindle Hub: Show current screen**.
+  pick a corner tap → **General → Kindle Hub: Open dashboard**.
 - **Tools → Kindle Hub → Pick a screen** lists every screen from the latest run.
 - **Works offline.** It keeps the last copy of every screen and shows it at once, then swaps in
   the fresh one when Wi-Fi connects.
-- **Stays fresh while open.** It checks the site every 15 minutes and follows what's on now
-  until you swipe to another screen.
+- **Stays fresh while open.** It checks the site every 15 minutes. The weather screen's clock is
+  redrawn every minute (just the clock, no full-screen flash).
 
 It uses the TRMNL plugin's Base URL, and the hourly dashboard keeps its own schedule.
 
@@ -173,14 +178,18 @@ If you use [Bookshelf](https://github.com/AndyHazz/bookshelf.koplugin) as KORead
 its dashboard button opens the Kindle Hub screen instead of Bookshelf's own cards (clock,
 reading stats, reading goal).
 
-1. Install the Kindle Hub plugin (step 4, item 1) and restart KOReader. That's all.
-2. Tap Bookshelf's dashboard button: you get the screen that's on now, full size.
+1. Install the Kindle Hub plugin (step 4, item 1) and restart KOReader.
+2. Make Bookshelf your home: in KOReader's file browser, tap the top of the screen → first tab
+   (filing cabinet) → **Start with → Bookshelf**. Kindle Hub then stays out of the way at
+   start-up (it still opens from its KUAL button).
+3. Tap Bookshelf's dashboard button: you get your dashboard, full size (Quarter Progress, or
+   whatever **Tools → Kindle Hub → Dashboard shows** is set to).
 
 - **Swipe** left or right for the other screens. **Tap** to go back to your books.
 - **Stays up to date while it's open.** It checks the site every 15 minutes (the site rebuilds
-  hourly) and swaps in the new screen as the day moves on: brief in the morning, weather at
-  midday, markets in the afternoon. After a swipe it keeps the screen you chose fresh instead.
-  When the Kindle wakes up, it catches up within seconds.
+  hourly) and swaps in a newer picture. With **What's on now** it moves with the schedule; with
+  **Take turns** it changes screen every 15 minutes. When the Kindle wakes up, it catches up
+  within seconds.
 - **Offline**, it shows the last saved copy. If there's nothing saved yet and no Wi-Fi,
   Bookshelf's own dashboard opens instead.
 - **As a desk display that never sleeps,** use the same two settings as the TRMNL dashboard:
@@ -242,6 +251,11 @@ Everything you're likely to change is in [`config.yaml`](config.yaml):
 | `screen.refresh_seconds` | How often the Kindle asks for a new screen |
 
 - **When each screen shows:** the `show:` times in each screen's `plugins/<name>/plugin.yaml`.
+  Add `days: [mon, tue, wed, thu, fri]` to limit a screen to some days, and
+  `only_in_window: true` to keep it off the Kindle outside its times (markets does both).
+- **How often the brief is rewritten:** `refresh_hours` in `plugins/morning_brief/plugin.yaml`
+  (default 3; 0 for once a day).
+- **Clock style:** `clock: "12h"` (7:05 PM) or `"24h"` (19:05) in `config.yaml`.
 - **Year of the Day style:** in `plugins/year_of_the_day/plugin.yaml`, set `mode:` to `comic`
   (default), `newspaper` or `text`. Add words to `prefer:` (e.g. `["India"]`) to favour those events.
   Picture modes skip events built around a death or an attack, and never put real people's faces
@@ -342,7 +356,11 @@ Open `site/index.html` to see the result. After changing a template, run
 - **Market data** comes from Yahoo Finance's unofficial chart API. If Yahoo blocks it, the
   markets screen drops out until it's switched to another source.
 - **Free AI models come and go.** `auto-free` picks from OpenRouter's current free list on each
-  run and tries up to three. On the free tier you get 50 requests a day, and this uses one.
+  run and tries up to three. On the free tier you get 50 requests a day; this uses about 8
+  (7 briefs and the Year of the Day picture prompt).
+- **The brief ebook is the morning edition.** KOReader's News Downloader doesn't download a
+  day's brief again once it has it. The 3-hourly rewrites show up on the dashboard and on the
+  web page (`/briefs/<date>.html`).
 - **GitHub pauses schedules** in public repos after 60 days without commits. You'll get an email.
   Re-enable from the Actions tab, or push any small change.
 
@@ -357,6 +375,7 @@ templates/screen.css      e-ink styles shared by all screens
 koreader/                 Kindle side: Kindle Hub plugin (+ Bookshelf card), KUAL button, feed entry
 fixtures/demo/            sample data for --demo
 tools/docs_images.py      regenerates the README images (tools/bookshelf_mockup.py: the card mock-up)
+tools/make_clock_font.py  cuts the font the Kindle draws the weather clock with
 assets/fonts/             Inter typeface (SIL Open Font License, included)
 .github/workflows/        schedule and GitHub Pages deploy
 ```

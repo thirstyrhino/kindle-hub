@@ -1,7 +1,7 @@
 """Plugin discovery and the time-of-day playlist.
 
 A plugin is a folder under plugins/ with:
-  plugin.yaml      name, title, order, show windows, optional settings
+  plugin.yaml      name, title, order, show windows (optional days, only_in_window), optional settings
   fetch.py         def fetch(ctx) -> dict   (optional: def publish(ctx, data, site_dir))
   template.liquid  markup rendered into a Kindle-sized screen
 """
@@ -17,6 +17,8 @@ import yaml
 
 from .context import ROOT
 
+DAYS = {"mon": 0, "tue": 1, "wed": 2, "thu": 3, "fri": 4, "sat": 5, "sun": 6}
+
 
 @dataclass
 class Plugin:
@@ -28,6 +30,8 @@ class Plugin:
     folder: Path
     settings: dict
     module: ModuleType
+    days: frozenset = frozenset()   # weekdays (0 = Monday) the show windows apply on; empty = every day
+    only_in_window: bool = False    # outside its windows it's never on screen (no fallback, no "take turns")
 
     @property
     def template(self) -> str:
@@ -36,6 +40,8 @@ class Plugin:
     def on_air(self, now: datetime) -> bool:
         if not self.show:
             return False
+        if self.days and now.weekday() not in self.days:
+            return False
         t = now.time()
         for window in self.show:
             start_s, end_s = [s.strip() for s in window.split("-")]
@@ -43,6 +49,25 @@ class Plugin:
             if (start <= t <= end) if start <= end else (t >= start or t <= end):
                 return True
         return False
+
+    def window(self) -> dict | None:
+        """For the Kindle's "take turns": when an only_in_window screen may be shown.
+        Days are ISO weekdays (1 = Monday), times are local "HH:MM-HH:MM"."""
+        if not self.only_in_window:
+            return None
+        return {"days": sorted(d + 1 for d in (self.days or range(7))), "times": list(self.show)}
+
+
+def _days(value) -> frozenset:
+    if not value:
+        return frozenset()
+    days = set()
+    for d in value:
+        key = str(d).strip().lower()[:3]
+        if key not in DAYS:
+            raise ValueError(f"unknown day {d!r} (use mon, tue, ... sun)")
+        days.add(DAYS[key])
+    return frozenset(days)
 
 
 def load_plugins(only: list[str] | None = None) -> list[Plugin]:
@@ -61,7 +86,8 @@ def load_plugins(only: list[str] | None = None) -> list[Plugin]:
         spec.loader.exec_module(module)
         plugins.append(Plugin(name=name, title=meta.get("title", name), order=int(meta.get("order", 50)),
                               show=list(meta.get("show", [])), enabled=True, folder=folder, module=module,
-                              settings=dict(meta.get("settings") or {})))
+                              settings=dict(meta.get("settings") or {}), days=_days(meta.get("days")),
+                              only_in_window=bool(meta.get("only_in_window", False))))
     return sorted(plugins, key=lambda p: p.order)
 
 
@@ -70,7 +96,7 @@ def pick_on_air(plugins: list[Plugin], data: dict, now: datetime) -> Plugin | No
     When several share a window, rotate hourly so each gets air time."""
     usable = [p for p in plugins if data.get(p.name, {}).get("available", True)]
     live = [p for p in usable if p.on_air(now)]
-    pool = live or usable
+    pool = live or [p for p in usable if not p.only_in_window]
     if not pool:
         return None
     return pool[now.hour % len(pool)]

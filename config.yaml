@@ -6,6 +6,7 @@ site_url: "https://thirstyrhino.github.io/kindle-hub"
 
 title: "Morning Brief"
 timezone: "Asia/Kolkata"
+clock: "12h"            # time on the screens: "12h" (7:05 PM) or "24h" (19:05)
 
 location:
   name: "Bengaluru"

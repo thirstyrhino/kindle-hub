@@ -4,3 +4,7 @@ order: 30            # after weather and markets, so the AI can use them
 show:
   - "05:30-10:00"
   - "13:00-14:00"    # a midday reminder of what mattered this morning
+settings:
+  # Write a fresh brief when the last one is this many hours old (on the hourly refresh runs).
+  # Each one is a single AI call; OpenRouter's free tier allows 50 a day.
+  refresh_hours: 3

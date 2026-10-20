@@ -36,6 +36,31 @@ FIT_JS = """() => {
 }"""
 
 
+# Boxes marked data-live="clock" are redrawn by the Kindle Hub KOReader plugin every minute.
+# Report where each one is, its text baseline and type size, so the Kindle can paint over it.
+LIVE_JS = """() => Array.from(document.querySelectorAll('[data-live]')).map(el => {
+  const r = el.getBoundingClientRect(), cs = getComputedStyle(el);
+  const m = document.createElement('span');
+  m.style.cssText = 'display:inline-block;width:0;height:0;vertical-align:baseline';
+  el.appendChild(m);
+  const baseline = m.getBoundingClientRect().bottom;
+  m.remove();
+  const a = cs.textAlign;
+  return {kind: el.dataset.live, format: el.dataset.format || '',
+          x: Math.floor(r.left), y: Math.floor(r.top), w: Math.ceil(r.width), h: Math.ceil(r.height),
+          baseline: Math.round(baseline), size: Math.round(parseFloat(cs.fontSize)),
+          weight: parseInt(cs.fontWeight, 10),
+          align: (a === 'right' || a === 'end') ? 'right' : (a === 'center' ? 'center' : 'left')};
+})"""
+
+
+def clock_text(now, fmt: str) -> str:
+    """The time as the screens show it: "7:05 PM" (12h, default) or "19:05" (24h)."""
+    if fmt == "24h":
+        return now.strftime("%H:%M")
+    return now.strftime("%I:%M").lstrip("0") + " " + now.strftime("%p")
+
+
 def _font_css() -> str:
     rules = []
     for family, file, weight in FONTS:
@@ -51,6 +76,8 @@ def screen_vars(ctx: Context, plugin: Plugin, data: dict) -> dict:
             "title": plugin.title,
             "glyph": GLYPHS.get(plugin.name, GLYPHS["morning_brief"]),
             "updated": ctx.now.strftime("%H:%M"),
+            "time": clock_text(ctx.now, str(ctx.cfg.get("clock", "12h"))),
+            "clock_format": "24h" if str(ctx.cfg.get("clock", "12h")) == "24h" else "12h",
             "date_short": ctx.now.strftime("%a %d %b"),
             "date_long": ctx.now.strftime("%A, %d %B"),
             "location": ctx.cfg["location"]["name"],
@@ -70,8 +97,10 @@ def screen_html(ctx: Context, plugin: Plugin, data: dict) -> str:
 <body><div class="screen"><div class="view view--full">{markup}</div></div></body></html>"""
 
 
-def render_pngs(ctx: Context, jobs: list[tuple[Plugin, dict]], out_dir: Path) -> dict[str, Path]:
-    """Screenshot each screen with headless Chromium, then convert to 16-level greyscale."""
+def render_pngs(ctx: Context, jobs: list[tuple[Plugin, dict]], out_dir: Path,
+                live: dict | None = None) -> dict[str, Path]:
+    """Screenshot each screen with headless Chromium, then convert to 16-level greyscale.
+    Boxes the Kindle redraws itself (data-live) are recorded in `live`, per screen."""
     from playwright.sync_api import sync_playwright
 
     w, h = ctx.cfg["screen"]["width"], ctx.cfg["screen"]["height"]
@@ -88,6 +117,9 @@ def render_pngs(ctx: Context, jobs: list[tuple[Plugin, dict]], out_dir: Path) ->
             page.goto(src.as_uri())
             page.evaluate("document.fonts.ready")
             page.evaluate(FIT_JS)
+            boxes = page.evaluate(LIVE_JS)
+            if boxes and live is not None:
+                live[plugin.name] = [{**b, "sw": w, "sh": h} for b in boxes]   # sizes are for a w×h screen
             raw = work / f"{plugin.name}.raw.png"
             page.screenshot(path=str(raw), clip={"x": 0, "y": 0, "width": w, "height": h})
             img = Image.open(raw).convert("L")

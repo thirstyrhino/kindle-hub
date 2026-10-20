@@ -57,10 +57,11 @@ def make_tile(ctx: Context, p: Plugin) -> dict | None:
 
 
 def write_screens_list(ctx: Context, plugins: list[Plugin], rendered: dict, on_air: Plugin | None,
-                       site_dir: Path) -> None:
+                       site_dir: Path, live: dict | None = None) -> None:
     """GET <base>/api/screens is what the Kindle Hub KOReader plugin lists for picking a screen,
     and what its Bookshelf card reads (each screen's `tile`)."""
     site = ctx.cfg["site_url"]
+    live = live or {}
     screens = []
     for p in plugins:
         if p.name not in rendered:
@@ -69,6 +70,10 @@ def write_screens_list(ctx: Context, plugins: list[Plugin], rendered: dict, on_a
         tile = make_tile(ctx, p)
         if tile:
             s["tile"] = tile
+        if p.window():
+            s["window"] = p.window()           # e.g. markets: the Kindle's "take turns" skips it outside
+        if live.get(p.name):
+            s["live"] = live[p.name]           # e.g. the weather clock, drawn by the Kindle every minute
         screens.append(s)
     payload = {
         "updated": ctx.now.strftime("%a %d %b, %H:%M"),
@@ -97,6 +102,11 @@ def write_index(ctx: Context, plugins: list[Plugin], rendered: dict, on_air: Plu
     for p in plugins:
         status = "ON AIR" if on_air and p.name == on_air.name else ("unavailable" if p.name not in rendered else "")
         windows = ", ".join(p.show) or "rotation only"
+        if p.days and len(p.days) < 7:
+            names = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"]
+            ds = sorted(p.days)
+            span = f"{names[ds[0]]}–{names[ds[-1]]}" if ds == list(range(ds[0], ds[-1] + 1)) else ", ".join(names[d] for d in ds)
+            windows = f"{span} {windows}"
         img = (f'<img src="screens/{p.name}.png?v={ctx.stamp}" alt="{e(p.title)} screen">'
                if p.name in rendered else '<div class="missing">No data this run</div>')
         cards.append(f'<figure>{img}<figcaption><b>{e(p.title)}</b> <span class="tag">{status}</span>'

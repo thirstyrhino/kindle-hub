@@ -1,5 +1,7 @@
 name: markets
 title: Markets
 order: 20
-show:
-  - "13:00-16:00"
+show:                    # NSE/BSE trading hours, IST
+  - "09:15-15:30"
+days: [mon, tue, wed, thu, fri]
+only_in_window: true     # outside market hours it's left out: never on air, skipped by "take turns"
