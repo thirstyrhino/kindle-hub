@@ -31,6 +31,24 @@ def write_display_endpoint(ctx: Context, on_air: Plugin, site_dir: Path) -> dict
     return payload
 
 
+def write_screens_list(ctx: Context, plugins: list[Plugin], rendered: dict, on_air: Plugin | None,
+                       site_dir: Path) -> None:
+    """GET <base>/api/screens is what the Kindle Hub KOReader plugin lists for picking a screen."""
+    site = ctx.cfg["site_url"]
+    payload = {
+        "updated": ctx.now.strftime("%a %d %b, %H:%M"),
+        "on_air": on_air.name if on_air else None,
+        "screens": [{"name": p.name, "title": p.title,
+                     "image_url": f"{site}/screens/{p.name}.png?v={ctx.stamp}"}
+                    for p in plugins if p.name in rendered],
+    }
+    api = site_dir / "api"
+    api.mkdir(parents=True, exist_ok=True)
+    body = json.dumps(payload, ensure_ascii=False, indent=1)
+    (api / "screens").write_text(body, encoding="utf-8")
+    (api / "screens.json").write_text(body, encoding="utf-8")
+
+
 def write_data(name: str, data: dict, site_dir: Path) -> None:
     d = site_dir / "data"
     d.mkdir(parents=True, exist_ok=True)

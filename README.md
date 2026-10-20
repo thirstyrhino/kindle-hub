@@ -132,6 +132,11 @@ Each run's page on GitHub starts with a short summary of what happened:
 4. **Tools → TRMNL Display → Start dashboard.**
 
 Tap the screen to leave the dashboard and go back to reading. Start it again from the same menu.
+
+**Pick a screen yourself.** Copy [`koreader/kindlehub.koplugin`](koreader/kindlehub.koplugin) into
+`koreader/plugins/` too. **Tools → Kindle Hub** lists every screen from the latest run; tap one
+to show it, swipe left or right for the next or previous screen, and tap to close. It uses the
+TRMNL plugin's Base URL, and the hourly dashboard keeps its own schedule.
 Keep the Kindle on a charger while it's a dashboard. It checks for a new screen every hour.
 
 ---

@@ -19,7 +19,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 
 from core.context import ROOT, Context, load_config  # noqa: E402
 from core.plugins import load_plugins, pick_on_air  # noqa: E402
-from core.publish import write_data, write_display_endpoint, write_index  # noqa: E402
+from core.publish import write_data, write_display_endpoint, write_index, write_screens_list  # noqa: E402
 from core.render import render_pngs  # noqa: E402
 
 
@@ -73,6 +73,7 @@ def main() -> int:
     else:
         ctx.log("nothing rendered; the Kindle keeps its last screen")
     write_index(ctx, plugins, rendered, on_air, site_dir)
+    write_screens_list(ctx, plugins, rendered, on_air, site_dir)
     write_run_summary(ctx, plugins, rendered, on_air)
     return 0 if rendered else 1
 
