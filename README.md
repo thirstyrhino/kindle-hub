@@ -1,123 +1,275 @@
 # kindle-hub
 
-Jailbroken Kindle hub: an AI morning brief and TRMNL-style dashboard screens for a Kindle running KOReader.
-Runs free on GitHub: Actions builds it on a schedule, Pages hosts it. Nothing to keep running at home.
+**Turn a jailbroken Kindle into a morning newspaper and a desk dashboard.**
+An AI-written brief arrives as an ebook every morning, and the screen rotates through
+weather, air quality and markets during the day. It runs entirely on GitHub's free tier:
+nothing to host, nothing to keep switched on at home.
 
-What it publishes:
+![Three Kindle screens: the morning brief, weather and air quality, and markets](docs/images/hero.png)
 
-| URL | Used by | What |
+<sub>Screens shown with sample data. They are rendered at the Kindle's exact resolution (600×800) in 16 shades of grey.</sub>
+
+---
+
+## What you get
+
+- **A morning brief you read like a book.** At 05:47 IST, an AI model reads your news feeds,
+  picks the stories that matter to you and writes a one-page summary with today's weather and
+  markets. KOReader downloads it as an ebook with one tap.
+- **A dashboard that changes through the day.** Leave the Kindle on a stand and it shows the
+  brief in the morning, weather and air quality at midday, markets in the afternoon and the
+  forecast in the evening. It updates every hour.
+- **₹0 to run.** GitHub Actions builds everything on a schedule and GitHub Pages hosts it. The
+  AI uses OpenRouter's free models (one call a day). Weather and air quality come from
+  Open-Meteo, which needs no key.
+- **Screens you can add yourself.** Each screen is a small folder with a data script and a
+  template. Copy one, change it, push, and it joins the rotation.
+
+## The screens
+
+<table>
+<tr>
+<td align="center" width="33%"><img src="docs/images/screen-morning_brief.png" width="260" alt="Morning brief screen"><br><b>Morning brief</b><br><sub>05:30–10:00 and 13:00–14:00</sub></td>
+<td align="center" width="33%"><img src="docs/images/screen-weather_aqi.png" width="260" alt="Weather and air quality screen"><br><b>Weather &amp; air</b><br><sub>10:00–13:00 and 16:00–05:59</sub></td>
+<td align="center" width="33%"><img src="docs/images/screen-markets.png" width="260" alt="Markets screen"><br><b>Markets</b><br><sub>13:00–16:00</sub></td>
+</tr>
+<tr>
+<td valign="top">AI headline, three takeaways, the top stories that fit on screen, a weather strip and one focus for the day.</td>
+<td valign="top">Temperature now, US AQI on a scale with PM2.5 and PM10, a 4-day forecast and sunrise/sunset for Bengaluru.</td>
+<td valign="top">Nifty 50, Sensex and USD/INR with the day's move and a one-month trend line.</td>
+</tr>
+</table>
+
+When two screens share a time window they take turns hour by hour. A screen whose data
+couldn't be fetched is skipped, so the Kindle never shows an empty page.
+
+## How it works
+
+```mermaid
+flowchart LR
+    A["GitHub Actions<br/>05:47 IST + hourly"] -->|news, weather, markets| B["Build<br/>build.py"]
+    B -->|one call a day| C["OpenRouter<br/>free model"]
+    B -->|publish| D["GitHub Pages<br/>thirstyrhino.github.io/kindle-hub"]
+    D -->|brief.xml| E["KOReader<br/>News Downloader"]
+    D -->|/api/display + PNG| F["TRMNL plugin<br/>for KOReader"]
+```
+
+| When (IST) | What happens |
+|---|---|
+| **05:47** | Fetches feeds, weather and markets; the AI writes today's brief; screens are rendered and published. |
+| **Hourly, 06:37–23:37** | Refreshes weather and markets, reuses today's brief (no extra AI call) and picks the screen for that hour. |
+
+GitHub sometimes starts scheduled runs 10–30 minutes late. That's fine for a dashboard that
+updates hourly.
+
+The site publishes four things:
+
+| Address | Used by | Contains |
 |---|---|---|
-| `/brief.xml` | KOReader **News Downloader** | Today's brief as an ebook (one tap each morning) |
-| `/api/display` | TRMNL's **KOReader plugin** (Base URL = the site) | Which screen to show + its image |
-| `/screens/current.png` | anything that can show an image URL | The screen that's on air now |
-| `/` | you, in a browser | Previews of every screen, links, setup values |
+| `/brief.xml` | KOReader's **News Downloader** | The last 7 briefs as a feed; each becomes an ebook |
+| `/api/display` | TRMNL's **KOReader plugin** | Which screen is on now, and its image |
+| `/screens/current.png` | Any app that can show an image from a URL | The screen that's on now |
+| `/` | You, in a browser | Every screen, plus the addresses to copy into the Kindle |
 
-Screens included (each one is a plugin folder in `plugins/`):
+<p align="center"><img src="docs/images/site-index.png" width="720" alt="The site's home page with setup addresses and screen previews"></p>
 
-| Plugin | Shows | On air (IST) |
-|---|---|---|
-| `morning_brief` | AI headline, 3 bullets, top stories, weather strip, focus | 05:30–10:00, 13:00–14:00 |
-| `weather_aqi` | Now, AQI with bar, 4-day forecast, sunrise/sunset | 10:00–13:00, 16:00–05:59 |
-| `markets` | Nifty 50, Sensex, USD/INR with 1-month sparklines | 13:00–16:00 |
+---
 
-When windows overlap, screens take turns hour by hour. A screen whose data failed is skipped.
+## Set up
 
-## Schedule
+You need a Kindle that's already jailbroken with KOReader installed, and about 20 minutes.
 
-- **05:47 IST** – fetches feeds, weather, markets; one OpenRouter call writes the brief.
-- **Hourly 06:37–23:37 IST** – refreshes weather/markets, reuses today's brief, picks the screen on air.
-- GitHub can start scheduled runs late (sometimes 10–30 min). Fine for this; not for anything to-the-minute.
+### 1. GitHub (one time)
 
-## One-time setup (≈15 min)
+1. **Add your AI key.** Get a key at [openrouter.ai](https://openrouter.ai) → Keys. In this repo:
+   **Settings → Secrets and variables → Actions → New repository secret**, name it
+   `OPENROUTER_API_KEY` and paste the key.
+   > No key? Everything still works. The brief becomes a plain list of top headlines.
+2. **Turn on Pages.** **Settings → Pages → Build and deployment → Source: GitHub Actions.**
+3. **Run it once.** **Actions → Build Kindle site → Run workflow** (mode: `full`).
+   When it turns green, open <https://thirstyrhino.github.io/kindle-hub/>.
 
-1. **Repo.** Done: `thirstyrhino/kindle-hub` (public, which Pages on a free account requires).
-2. **Key.** Get an OpenRouter key (openrouter.ai → Keys). In the repo: Settings → Secrets and variables →
-   Actions → New repository secret → name `OPENROUTER_API_KEY`.
-   With `models: "auto-free"` in `config.yaml` it only uses free models (`:free`); 1 call a day is far
-   under the free limit. No key? It still works and publishes a headlines-only brief.
-3. **Pages.** Settings → Pages → Build and deployment → Source: **GitHub Actions**.
-4. **First run.** Actions tab → *Build Kindle site* → Run workflow (mode: full). When it's green, open
-   <https://thirstyrhino.github.io/kindle-hub/> — you should see the three screens.
+Each run's page on GitHub starts with a short summary of what happened:
 
-The site URL is worked out from the repo name automatically. Set `site_url` in `config.yaml` only if you
-use a custom domain.
+| Screen | Result |
+|---|---|
+| Weather & Air | rendered |
+| Markets | rendered |
+| Morning Brief (on air) | AI brief by `google/gemini-…:free` |
 
-## Kindle setup (KOReader)
+### 2. Kindle: the morning brief
 
-**Morning brief as an ebook**
-1. KOReader → Tools → News downloader → Settings → add a feed:
-   `https://thirstyrhino.github.io/kindle-hub/brief.xml`, limit **1**, download full article **off**.
-   (Same values as `koreader/news-feed-entry.lua` if you prefer editing the config file.)
-2. Each morning: News downloader → **Download news**. The brief lands in the news folder.
+1. In KOReader: **Tools → News downloader → Settings**, add a feed:
+   - URL: `https://thirstyrhino.github.io/kindle-hub/brief.xml`
+   - Limit: **1**
+   - Download full article: **off** (the whole brief is already in the feed)
+2. Each morning: **News downloader → Download news**. The brief appears in KOReader's news folder.
 
-**Dashboard**
-1. Copy `trmnl.koplugin` from <https://github.com/usetrmnl/trmnl-koreader> into `koreader/plugins/`.
-   Put any word (e.g. `kindle`) in its `apikey.txt` — this site doesn't check it, but the plugin needs one.
-2. Restart KOReader → Tools → TRMNL Display → Configure TRMNL → **Base URL** =
-   `https://thirstyrhino.github.io/kindle-hub` (no trailing slash; the plugin adds `/api/display`).
-3. Tools → More tools → Keep alive: on. Settings → Device → Auto suspend: off.
-4. Tools → TRMNL Display → **Start dashboard**. Tap the screen to leave it and go back to reading.
+### 3. Kindle: the dashboard
 
-The Kindle re-checks every `screen.refresh_seconds` (default 1 hour). Keep it on a charger while it's a dashboard.
+1. Download [`trmnl.koplugin`](https://github.com/usetrmnl/trmnl-koreader) and copy the folder
+   into `koreader/plugins/` over USB. Put any word in its `apikey.txt` (for example `kindle`).
+   This site doesn't check it, but the plugin won't start without one.
+2. Restart KOReader. **Tools → TRMNL Display → Configure TRMNL → Base URL:**
+   `https://thirstyrhino.github.io/kindle-hub` (no trailing slash).
+3. Stop the Kindle from sleeping: **Tools → More tools → Keep alive: on** and
+   **Settings → Device → Auto suspend: off**.
+4. **Tools → TRMNL Display → Start dashboard.**
 
-## Your own plugins
+Tap the screen to leave the dashboard and go back to reading. Start it again from the same menu.
+Keep the Kindle on a charger while it's a dashboard. It checks for a new screen every hour.
 
+---
+
+## When something fails
+
+Each part fails on its own, and the Kindle never ends up blank.
+
+| If this fails | What you see |
+|---|---|
+| The AI (no key, rate limit, bad answer) | The brief switches to **Headlines only**: the top stories from your feeds, no summary |
+| A news feed | That feed is skipped; the others still go in |
+| Weather or markets | That screen drops out of the rotation until the next run that works |
+| A whole run | The Kindle keeps showing the last screen it downloaded |
+
+<p align="center"><img src="docs/images/screen-morning_brief-fallback.png" width="260" alt="Headlines-only brief shown when the AI is unavailable"><br><sub>The fallback brief</sub></p>
+
+The AI can only pick from the stories it was given. Each story's title and link come from your
+feeds, never from the model, so it can't invent a headline or a link.
+
+---
+
+## Make it yours
+
+Everything you're likely to change is in [`config.yaml`](config.yaml):
+
+| Setting | What it does |
+|---|---|
+| `location` | City name and coordinates for weather and air quality |
+| `feeds` | The news sources the AI chooses from. Any RSS or Atom feed works |
+| `ai.reader_profile` | What you care about. This goes straight into the AI's instructions |
+| `ai.stories` | How many stories the brief picks |
+| `ai.models` | `"auto-free"` picks from OpenRouter's current free models. Or list exact model IDs |
+| `screen.width` / `height` | 600×800 for this Kindle. Change if you move to another model |
+| `screen.refresh_seconds` | How often the Kindle asks for a new screen |
+
+- **When each screen shows:** the `show:` times in each screen's `plugins/<name>/plugin.yaml`.
+- **When the builds run:** `.github/workflows/build.yml`. Cron times are UTC (IST = UTC + 5:30).
+
+## Build your own screen
+
+A screen is one folder under `plugins/`. This countdown is a complete example:
+
+<table><tr>
+<td valign="top">
+
+**`plugins/countdown/plugin.yaml`**
+```yaml
+name: countdown
+title: Countdown
+order: 40
+show:
+  - "21:00-22:00"
 ```
-plugins/my_screen/
-  plugin.yaml       name, title, order, show windows
-  fetch.py          def fetch(ctx) -> dict      (optional: def publish(ctx, data, site_dir))
-  template.liquid   Liquid markup for one 600x800 screen
+
+**`plugins/countdown/fetch.py`**
+```python
+from datetime import date
+
+def fetch(ctx):
+    target = date(2026, 12, 25)
+    days = (target - ctx.now.date()).days
+    if days < 0:
+        return {"available": False}  # skip it
+    return {"event": "Holiday", "days": days,
+            "when": target.strftime("%A, %d %B")}
 ```
 
-- `fetch(ctx)` returns a dict; its keys become template variables. Return `{"available": False}` to skip the
-  screen this run. Use `ctx.get_json(url, params=...)`, `ctx.cfg`, `ctx.now`, and other plugins' data via
-  `ctx.usable("weather_aqi")` (lower `order` runs first).
-- Templates also get `meta.title`, `meta.updated`, `meta.date_short`, `meta.date_long`, `meta.glyph`.
-- Class names follow TRMNL's framework (`layout`, `title_bar`, `item`, `title`, `value`, `label`,
-  `description`), so a template can move to TRMNL or a LaraPaper server with light CSS changes.
-- Put `data-fit` on a list container and `data-fit-item` on its children: items that don't fit are dropped
-  whole instead of being cut mid-line.
-- Styles: `templates/screen.css`. Big type, thick lines, black on white — 600×800 at 167 ppi has no room for
-  subtlety.
-
-## Run locally
-
+**`plugins/countdown/template.liquid`**
+```liquid
+<div class="layout" style="justify-content:center;
+     align-items:center;text-align:center">
+  <span class="label">{{ event }}</span>
+  <span class="value value--xxlarge">{{ days }}</span>
+  <span class="title">days to go</span>
+  <span class="description">{{ when }}</span>
+</div>
+<div class="title_bar">
+  {{ meta.glyph }}<span class="title">{{ meta.title }}</span>
+  <span class="instance">updated {{ meta.updated }}</span>
+</div>
 ```
+
+</td>
+<td valign="top" align="center"><img src="docs/images/screen-countdown-example.png" width="240" alt="Countdown example screen"><br><sub>What it renders</sub></td>
+</tr></table>
+
+How the pieces fit:
+
+- **`fetch(ctx)`** returns a dictionary. Its keys become template variables. Return
+  `{"available": False}` to skip the screen for this run.
+- **Fetching data:** `ctx.get_json(url, params=...)` (with retries), `ctx.cfg` for `config.yaml`,
+  `ctx.now` for the time in IST, and `ctx.usable("weather_aqi")` for another screen's data.
+  Screens run in `order`, lowest first.
+- **Templates** use [Liquid](https://shopify.github.io/liquid/). Every template also gets
+  `meta.title`, `meta.updated`, `meta.date_short`, `meta.date_long` and `meta.glyph`.
+- **Styles** live in [`templates/screen.css`](templates/screen.css). The class names follow TRMNL's
+  framework (`layout`, `title_bar`, `item`, `title`, `value`, `label`, `description`), so a
+  template can move to TRMNL or a self-hosted LaraPaper server with light changes.
+- **Long lists:** put `data-fit` on the list and `data-fit-item` on each entry. Entries that
+  don't fit are dropped whole instead of being cut off mid-line.
+- **Design for 600×800 e-ink:** big type, thick lines, black on white. Fine detail turns to mush
+  on this screen.
+
+Preview locally with `python build.py --demo --at 21:30 --only countdown`, then open
+`site/screens/countdown.png`.
+
+## Run it on your computer
+
+```bash
 pip install -r requirements.txt
 python -m playwright install chromium
-python build.py --demo                 # sample data, no network or key
-python build.py --demo --at 14:30      # see what's on air at 14:30
-python build.py                        # real data (set OPENROUTER_API_KEY for the AI brief)
+
+python build.py --demo              # sample data: no internet or key needed
+python build.py --demo --at 14:30   # which screen is on at 14:30?
+python build.py                     # real data (set OPENROUTER_API_KEY for the AI brief)
 ```
-Then open `site/index.html`.
 
-## Change things
+Open `site/index.html` to see the result. After changing a template, run
+`python tools/docs_images.py` to refresh the pictures in this README.
 
-All in `config.yaml`: location, news feeds, what the brief should care about (`reader_profile`),
-number of stories, models, screen size, refresh interval. Screen windows: each plugin's `plugin.yaml`.
-Run times: `.github/workflows/build.yml` (cron is in UTC; IST = UTC + 5:30).
+## Good to know
 
-## Limits worth knowing
+- **Everything published is public.** That's fine for weather, news and markets. Don't add
+  screens with private data (calendar, email, business numbers) to this repo. Those need
+  private hosting.
+- **Market data** comes from Yahoo Finance's unofficial chart API. If Yahoo blocks it, the
+  markets screen drops out until it's switched to another source.
+- **Free AI models come and go.** `auto-free` picks from OpenRouter's current free list on each
+  run and tries up to three. On the free tier you get 50 requests a day, and this uses one.
+- **GitHub pauses schedules** in public repos after 60 days without commits. You'll get an email.
+  Re-enable from the Actions tab, or push any small change.
 
-- **Everything published is public.** Fine for weather, AQI, news and markets. Calendars, inbox or business
-  numbers need private hosting (a home server, or Cloudflare Pages with access control).
-- **Markets data** comes from Yahoo Finance's unofficial chart endpoint. If it stops working, that screen
-  disappears from rotation until it's fixed or swapped for another source.
-- **Free AI models change.** `auto-free` picks from what OpenRouter lists as free on each run; if none
-  respond, the brief falls back to headlines only. To pin a model, list it under `ai.models`.
-- **GitHub pauses schedules** in public repos after 60 days without commits. You'll get an email; re-enable
-  it from the Actions tab or push any small change.
-
-## Files
+## Project layout
 
 ```
-build.py                 entry point
-config.yaml              your settings
-core/                    context, OpenRouter client, feed writer, renderer, publisher, playlist
-plugins/*/               the screens
-templates/screen.css     shared e-ink styles
-assets/fonts/            Inter (SIL OFL, licence included)
-fixtures/demo/           sample data for --demo
-koreader/                News Downloader entry
-.github/workflows/       schedule + Pages deploy
+build.py                  entry point: fetch → render → publish
+config.yaml               your settings
+plugins/<screen>/         one folder per screen (plugin.yaml, fetch.py, template.liquid)
+core/                     shared code: OpenRouter client, feed writer, renderer, playlist
+templates/screen.css      e-ink styles shared by all screens
+koreader/                 the News Downloader feed entry
+fixtures/demo/            sample data for --demo
+tools/docs_images.py      regenerates the README images
+assets/fonts/             Inter typeface (SIL Open Font License, included)
+.github/workflows/        schedule and GitHub Pages deploy
 ```
+
+## Credits
+
+[KOReader](https://github.com/koreader/koreader) ·
+[TRMNL KOReader plugin](https://github.com/usetrmnl/trmnl-koreader) and the
+[TRMNL framework](https://trmnl.com/framework) this borrows its class names from ·
+[Open-Meteo](https://open-meteo.com) for weather and air quality ·
+[OpenRouter](https://openrouter.ai) for the AI models ·
+[Inter](https://rsms.me/inter/) by Rasmus Andersson.
