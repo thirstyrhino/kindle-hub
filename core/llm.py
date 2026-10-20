@@ -27,6 +27,7 @@ def pick_models(ctx: Context) -> list[str]:
         listing = ctx.get_json(f"{_base()}/models", timeout=20, retries=1)
     except Exception as e:
         ctx.log(f"could not list OpenRouter models: {e}")
+        ctx.note("openrouter", error=f"model list: {e}")
         return []
     avoid = [a.lower() for a in ai.get("avoid", [])]
     free = []
@@ -67,11 +68,14 @@ def extract_json(text: str) -> Any:
 def generate_json(ctx: Context, system: str, user: str, max_tokens: int = 1400) -> tuple[dict | None, str | None]:
     """Returns (parsed_json, model_used). (None, None) when no key, no models or every attempt fails."""
     key = os.environ.get("OPENROUTER_API_KEY", "").strip()
+    ctx.note("openrouter", key_present=bool(key))
     if not key:
         ctx.log("OPENROUTER_API_KEY not set; using the no-AI fallback brief")
         return None, None
     models = pick_models(ctx)
+    ctx.note("openrouter", models_tried=models)
     if not models:
+        ctx.note("openrouter", error="no usable models found")
         return None, None
 
     headers = {
@@ -94,13 +98,18 @@ def generate_json(ctx: Context, system: str, user: str, max_tokens: int = 1400) 
             r = ctx.session.post(f"{_base()}/chat/completions", json=body, headers=headers, timeout=120)
             if r.status_code != 200:
                 ctx.log(f"OpenRouter {attempt} -> HTTP {r.status_code}: {r.text[:200]}")
+                ctx.note("openrouter", error=f"{attempt} -> HTTP {r.status_code}: {r.text[:200]}")
                 continue
             payload = r.json()
             content = payload["choices"][0]["message"].get("content") or ""
             parsed = extract_json(content)
             if isinstance(parsed, dict):
-                return parsed, payload.get("model") or attempt.get("model") or models[0]
+                used = payload.get("model") or attempt.get("model") or models[0]
+                ctx.note("openrouter", ok=True, model_used=used)
+                return parsed, used
             ctx.log("model returned JSON that is not an object")
+            ctx.note("openrouter", error=f"{attempt}: JSON was not an object")
         except Exception as e:
             ctx.log(f"OpenRouter attempt {attempt} failed: {e}")
+            ctx.note("openrouter", error=f"{attempt}: {type(e).__name__}: {e}")
     return None, None

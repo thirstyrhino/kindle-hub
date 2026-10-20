@@ -42,6 +42,7 @@ class Context:
     data: dict[str, Any] = field(default_factory=dict)   # plugin name -> fetched data
     settings: dict[str, Any] = field(default_factory=dict)  # current plugin's plugin.yaml settings
     _previous: dict[str, Any] = field(default_factory=dict)
+    diag: dict[str, Any] = field(default_factory=dict)      # published as data/_diagnostics.json (no secrets)
     session: requests.Session = field(default_factory=requests.Session)
 
     def __post_init__(self):
@@ -53,6 +54,15 @@ class Context:
         self.session.headers["User-Agent"] = UA
 
     # -- logging -----------------------------------------------------------
+    def note(self, service: str, **kv: Any) -> None:
+        """Record what a service did this run. Values must never contain keys or tokens."""
+        entry = self.diag.setdefault(service, {})
+        for k, v in kv.items():
+            if k == "error":
+                entry.setdefault("errors", []).append(str(v)[:300])
+            else:
+                entry[k] = v
+
     def log(self, *parts: Any) -> None:
         print("[kindle-hub]", *parts, file=sys.stderr, flush=True)
 

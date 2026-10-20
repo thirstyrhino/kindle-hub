@@ -28,6 +28,8 @@ def generate(ctx: Context, prompt: str, model: str = DEFAULT_MODEL, seed: int | 
             return ctx.fixture("yotd_illustration.png")
         except FileNotFoundError:
             return None
+    ctx.note("cloudflare", account_id_present=bool(os.environ.get("CLOUDFLARE_ACCOUNT_ID")),
+             token_present=bool(os.environ.get("CLOUDFLARE_API_TOKEN")), model=model)
     if not configured():
         ctx.log("image: CLOUDFLARE_ACCOUNT_ID / CLOUDFLARE_API_TOKEN not set; using the text layout")
         return None
@@ -41,17 +43,22 @@ def generate(ctx: Context, prompt: str, model: str = DEFAULT_MODEL, seed: int | 
                                  headers={"Authorization": f"Bearer {os.environ['CLOUDFLARE_API_TOKEN']}"})
             if r.status_code != 200:
                 ctx.log(f"image: Cloudflare HTTP {r.status_code}: {r.text[:200]}")
+                ctx.note("cloudflare", error=f"HTTP {r.status_code}: {r.text[:200]}")
                 continue
             if r.headers.get("content-type", "").startswith("image/"):
+                ctx.note("cloudflare", ok=True)
                 return r.content
             payload = r.json()
             b64 = (payload.get("result") or {}).get("image") or payload.get("image")
             if not b64:
                 ctx.log(f"image: no image in response: {str(payload)[:200]}")
+                ctx.note("cloudflare", error=f"no image in response: {str(payload)[:200]}")
                 continue
+            ctx.note("cloudflare", ok=True)
             return base64.b64decode(b64)
         except Exception as e:
             ctx.log(f"image: attempt {attempt} failed: {e}")
+            ctx.note("cloudflare", error=f"{type(e).__name__}: {e}")
     return None
 
 

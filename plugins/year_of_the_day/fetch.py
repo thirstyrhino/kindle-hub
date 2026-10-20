@@ -102,6 +102,7 @@ def _illustrate(ctx, main: dict, mode: str) -> Path | None:
         imagegen.for_eink(raw, IMAGE_W, IMAGE_H).save(out, optimize=True)
     except Exception as e:  # not an image we can read
         ctx.log(f"year_of_the_day: could not process image: {e}")
+        ctx.note("cloudflare", error=f"image unreadable: {e}")
         return None
     return out
 

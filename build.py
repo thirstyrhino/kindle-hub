@@ -74,6 +74,10 @@ def main() -> int:
         ctx.log("nothing rendered; the Kindle keeps its last screen")
     write_index(ctx, plugins, rendered, on_air, site_dir)
     write_screens_list(ctx, plugins, rendered, on_air, site_dir)
+    write_data("_diagnostics", {"built": ctx.now.strftime("%Y-%m-%d %H:%M"), "mode": ctx.mode,
+                                "secrets": {k: bool(os.environ.get(k)) for k in
+                                            ["OPENROUTER_API_KEY", "CLOUDFLARE_ACCOUNT_ID", "CLOUDFLARE_API_TOKEN"]},
+                                **ctx.diag}, site_dir)
     write_run_summary(ctx, plugins, rendered, on_air)
     return 0 if rendered else 1
 
@@ -97,6 +101,9 @@ def write_run_summary(ctx, plugins, rendered, on_air) -> None:
         else:
             result = "rendered"
         rows.append(f"| {p.title}{' (on air)' if on_air and p.name == on_air.name else ''} | {result} |")
+    for service, info in ctx.diag.items():
+        for err in info.get("errors", [])[:3]:
+            rows.append(f"| {service} error | {err.replace('|', '/')[:200]} |")
     with open(path, "a", encoding="utf-8") as f:
         f.write(f"### Kindle Hub · {ctx.mode} run · {ctx.now:%d %b %H:%M} IST\n\n" + "\n".join(rows) + "\n")
 
