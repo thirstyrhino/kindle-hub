@@ -42,7 +42,7 @@ nothing to host, nothing to keep switched on at home.
 </tr>
 <tr>
 <td valign="top">Nifty 50, Sensex and USD/INR with the day's move and a one-month trend line.</td>
-<td valign="top">One square per day of the quarter (done, today, to come), how far through it you are, days and weekdays left, plus month and year bars. Like TRMNL's <a href="https://trmnl.com/recipes/quarter-progress-212805">Quarter Progress</a> recipe, set out for a portrait screen. Switch to April–March financial-year quarters in its <code>plugin.yaml</code>.</td>
+<td valign="top">One square per day of the quarter (passed, today, still to come), with days passed and days left. Same clean look as TRMNL's <a href="https://trmnl.com/recipes/quarter-progress-212805">Quarter Progress</a> recipe, set out for a portrait screen. Switch to April–March financial-year quarters in its <code>plugin.yaml</code>.</td>
 </tr>
 </table>
 
@@ -161,7 +161,7 @@ Everything you're likely to change is in [`config.yaml`](config.yaml):
 
 - **When each screen shows:** the `show:` times in each screen's `plugins/<name>/plugin.yaml`.
 - **Financial-year quarters:** in `plugins/quarter_progress/plugin.yaml`, set
-  `fiscal_year_start: 4`. October–December then shows as **Q3 FY27** and the year bar tracks FY27.
+  `fiscal_year_start: 4`. October–December then shows as **Q3 FY27**.
 - **When the builds run:** `.github/workflows/build.yml`. Cron times are UTC (IST = UTC + 5:30).
 
 ## Build your own screen
