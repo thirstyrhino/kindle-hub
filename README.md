@@ -165,6 +165,34 @@ right for the other screens, tap to close and you're in KOReader as usual.
 
 It uses the TRMNL plugin's Base URL, and the hourly dashboard keeps its own schedule.
 
+### 5. Kindle: Kindle Hub cards on your Bookshelf home screen
+
+If you use [Bookshelf](https://github.com/AndyHazz/bookshelf.koplugin) as KOReader's home screen,
+Kindle Hub screens can sit on its dashboard as cards, next to the clock, reading stats and
+reading goal.
+
+<p align="center"><img src="docs/images/bookshelf-cards.png" width="300" alt="Mock-up of Bookshelf's dashboard with a clock card and Kindle Hub cards for weather, quarter progress, the morning brief and year of the day"><br><sub>Mock-up from the sample data. On the Kindle, Bookshelf sizes the cards to fit.</sub></p>
+
+1. Install the Kindle Hub plugin (step 4, item 1) and restart KOReader once. It adds its card
+   to Bookshelf by itself.
+2. On Bookshelf's dashboard, long-press any card, tap the **⊕** (add) button and choose
+   **Kindle Hub** from the cards.
+3. Pick what the card shows: one screen (Weather & Air, Quarter Progress, Morning Brief…) or
+   **What's on now**, which follows the dashboard schedule through the day. Add one card per
+   screen you want.
+
+- **Tap a card** to open that screen full size. Swipe for the others, tap to come back.
+- **Long-press → Module settings…** to change the screen or refresh now.
+- **Updates itself** when Wi-Fi is already on (it never turns Wi-Fi on just to draw the home
+  screen), and keeps the last copy for when it's off.
+- If Bookshelf opens on its dashboard, you may want **Tools → Kindle Hub → Open when KOReader
+  starts → Never**, so KOReader opens on the cards instead of a full-screen picture.
+
+The cards show a short summary each screen publishes in `api/screens` (see `tile()` in
+[Build your own screen](#build-your-own-screen)). The plugin keeps a two-line loader in
+`koreader/settings/bookshelf/micromodules/kindlehub.lua`; the card's code is
+[`bookshelf_card.lua`](koreader/kindlehub.koplugin/bookshelf_card.lua) in the plugin folder.
+
 
 ---
 
@@ -260,6 +288,10 @@ How the pieces fit:
 - **`fetch(ctx)`** returns a dictionary. Its keys become template variables. Return
   `{"available": False}` to skip the screen for this run.
 - **Settings:** anything under `settings:` in a screen's `plugin.yaml` is available as `ctx.settings`.
+- **A Bookshelf card (optional):** add `def tile(data)` to `fetch.py` and the screen gets a card
+  on Bookshelf's dashboard. Return any of `heading`, `value`, `suffix`, `sub`, `context` and
+  `text` (short strings) and `bar` (0 to 1), for example
+  `{"heading": data["event"], "value": str(data["days"]), "suffix": "days to go"}`.
 - **Fetching data:** `ctx.get_json(url, params=...)` (with retries), `ctx.cfg` for `config.yaml`,
   `ctx.now` for the time in IST, and `ctx.usable("weather_aqi")` for another screen's data.
   Screens run in `order`, lowest first.
@@ -310,9 +342,9 @@ config.yaml               your settings
 plugins/<screen>/         one folder per screen (plugin.yaml, fetch.py, template.liquid)
 core/                     shared code: OpenRouter client, feed writer, renderer, playlist
 templates/screen.css      e-ink styles shared by all screens
-koreader/                 the News Downloader feed entry
+koreader/                 Kindle side: Kindle Hub plugin (+ Bookshelf card), KUAL button, feed entry
 fixtures/demo/            sample data for --demo
-tools/docs_images.py      regenerates the README images
+tools/docs_images.py      regenerates the README images (tools/bookshelf_mockup.py: the card mock-up)
 assets/fonts/             Inter typeface (SIL Open Font License, included)
 .github/workflows/        schedule and GitHub Pages deploy
 ```

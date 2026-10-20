@@ -59,3 +59,15 @@ def fetch(ctx):
                 "pm25": round(aq_cur["pm2_5"]) if aq_cur.get("pm2_5") is not None else None,
                 "pm10": round(aq_cur["pm10"]) if aq_cur.get("pm10") is not None else None},
     }
+
+
+def tile(data):
+    """Summary for the Kindle Hub card on Bookshelf's home screen."""
+    now, today, aqi = data["now"], data["today"], data.get("aqi") or {}
+    return {
+        "heading": data["location"],
+        "value": f"{now['temp']}°",
+        "suffix": now["label"],
+        "sub": f"↑{today['high']}° ↓{today['low']}° · rain {today['rain']}%",
+        "context": f"AQI {aqi['value']} · {aqi['label']}" if aqi.get("value") is not None else None,
+    }

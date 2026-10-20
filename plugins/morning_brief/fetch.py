@@ -3,6 +3,7 @@
 Runs the model once a day ("full" mode). Hourly refreshes reuse today's brief from the live site.
 If the model is unavailable, a plain brief is built from the headlines so the Kindle never goes blank.
 """
+from datetime import date
 from email.utils import format_datetime
 from pathlib import Path
 
@@ -154,3 +155,15 @@ def fetch(ctx):
 def publish(ctx, data, site_dir: Path):
     """Write the KOReader feed (brief.xml) and the dated archive pages."""
     write_feed(ctx, data, site_dir)
+
+
+def tile(data):
+    """Summary for the Kindle Hub card on Bookshelf's home screen."""
+    stories = data.get("stories") or []
+    text = data["headline"] if data.get("ai") else (stories[0]["title"] if stories else data.get("headline"))
+    when = date.fromisoformat(data["date"]).strftime("%a %-d %b") if data.get("date") else ""
+    return {
+        "heading": f"Morning brief · {when}" if when else "Morning brief",
+        "text": text,
+        "context": f"{len(stories)} stories" if stories else None,
+    }

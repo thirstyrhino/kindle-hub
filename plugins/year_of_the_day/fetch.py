@@ -151,3 +151,14 @@ def publish(ctx, data, site_dir: Path):
         dest = site_dir / SITE_IMAGE
         dest.parent.mkdir(parents=True, exist_ok=True)
         shutil.copyfile(ROOT / "build" / "img" / "year_of_the_day.png", dest)
+
+
+def tile(data):
+    """Summary for the Kindle Hub card on Bookshelf's home screen."""
+    main = data["main"]
+    return {
+        "heading": f"On this day · {data['date_long']}",
+        "value": main["label"],
+        "suffix": f"· {main['ago']} years ago" if main.get("ago", 0) > 0 else None,
+        "text": main["text"],
+    }

@@ -54,3 +54,16 @@ def fetch(ctx):
         "missing": errors,
         "session": "Market open" if open_now else "Last close",
     }
+
+
+def tile(data):
+    """Summary for the Kindle Hub card on Bookshelf's home screen."""
+    rows = data["rows"]
+    first, rest = rows[0], [f"{r['name']} {r['value']} {r['pct']}" for r in rows[1:3]]
+    return {
+        "heading": f"{first['name']} · {data['session']}",
+        "value": first["value"],
+        "suffix": first["pct"],
+        "sub": rest[0] if rest else None,
+        "context": rest[1] if len(rest) > 1 else None,
+    }

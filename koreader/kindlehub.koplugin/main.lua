@@ -11,6 +11,8 @@ Getting there fast:
   * Two gesture actions: "Kindle Hub: Show current screen" and "Kindle Hub: Pick a screen".
   * The last list and every screen are cached, so the screen appears at once, even offline, and
     is then refreshed when Wi-Fi is up.
+  * With the Bookshelf plugin, Kindle Hub cards on its home screen (bookshelf_card.lua). This
+    plugin keeps a small loader for that card in settings/bookshelf/micromodules/.
 ]]
 
 local ButtonDialog = require("ui/widget/buttondialog")
@@ -34,13 +36,44 @@ local Input = Device.input
 
 -- Used only when the TRMNL plugin has no base URL saved.
 local DEFAULT_SITE = "https://thirstyrhino.github.io/kindle-hub"
-local USER_AGENT = "kindlehub-koreader/1.1"
+local USER_AGENT = "kindlehub-koreader/1.2"
 local START_KEY = "kindlehub_start_with"          -- "always" | "launcher" | "never"
 local FLAG_NAME = "kindlehub.launch"               -- written by the KUAL button, in the settings dir
 
 -- Plugins are re-created every time KOReader switches between the file browser and a book;
 -- this module-level flag makes "open on start" happen once per KOReader run.
 local started = false
+
+-- The saved screen list as last read for the Bookshelf card, which reads it on every redraw.
+local list_memo = nil   -- { mtime =, data = }
+
+-- This plugin's folder, absolute (KOReader loads plugins from a relative path).
+local PLUGIN_DIR = (function()
+    local dir = debug.getinfo(1, "S").source:match("^@(.*/)") or "./"
+    if dir:sub(1, 1) ~= "/" then
+        local ok, lfs = pcall(require, "libs/libkoreader-lfs")
+        local cwd = ok and lfs.currentdir()
+        if cwd then dir = cwd .. "/" .. dir:gsub("^%./", "") end
+    end
+    return dir
+end)()
+local CARD_FILE = PLUGIN_DIR .. "bookshelf_card.lua"
+
+-- Bookshelf loads every .lua in this folder as a card; ours just runs CARD_FILE.
+local CARD_LOADER = [=[
+-- Kindle Hub card for Bookshelf. Kept up to date by the Kindle Hub plugin; the card's code
+-- lives in that plugin, at the path below.
+local ok, spec = pcall(dofile, %q)
+if ok and type(spec) == "table" then return spec end
+return {
+    key = "kindlehub", title = "Kindle Hub", summary = "Needs the Kindle Hub plugin.",
+    render = function(ctx)
+        local Kit = require("lib/bookshelf_module_kit")
+        return Kit.fitText{ text = "Kindle Hub plugin not found in koreader/plugins.", size = 14,
+            scale_pct = ctx.scale, width = math.max(50, ctx.width or 50), fgcolor = Kit.COLOR_MUTED }
+    end,
+}
+]=]
 
 local KindleHub = WidgetContainer:extend{
     name = "kindlehub",
@@ -60,14 +93,20 @@ local function cacheDir()
     return DataStorage:getDataDir() .. "/cache"
 end
 
+local function listCachePath()
+    return cacheDir() .. "/kindlehub-screens.json"
+end
+
 function KindleHub:init()
     Dispatcher:registerAction("kindlehub_now", {category = "none", event = "KindleHubNow",
                                                  title = _("Kindle Hub: Show current screen"), general = true})
     Dispatcher:registerAction("kindlehub_pick", {category = "none", event = "KindleHubPick",
                                                   title = _("Kindle Hub: Pick a screen"), general = true})
     self.ui.menu:registerToMainMenu(self)
+    package.loaded["kindlehub/api"].plugin = self
     if not started then
         started = true
+        pcall(self.installCard, self)
         if self:shouldOpenOnStart() then
             -- Let KOReader finish drawing its first screen, then cover it.
             UIManager:nextTick(function() self:showNow() end)
@@ -138,12 +177,13 @@ end
 function KindleHub:fetchList()
     local socketutil = require("socketutil")
     local body = {}
-    local list_cache = cacheDir() .. "/kindlehub-screens.json"
+    local list_cache = listCachePath()
     local ok, err = self:get(self:getSite() .. "/api/screens", socketutil.table_sink(body))
     local data = ok and decodeList(table.concat(body))
     if data then
         local f = io.open(list_cache, "wb")
         if f then f:write(table.concat(body)) f:close() end
+        list_memo = nil
         return data
     end
     local cached = self:cachedList()
@@ -155,7 +195,7 @@ function KindleHub:fetchList()
 end
 
 function KindleHub:cachedList()
-    local f = io.open(cacheDir() .. "/kindlehub-screens.json", "rb")
+    local f = io.open(listCachePath(), "rb")
     if not f then return nil end
     local text = f:read("*a")
     f:close()
@@ -166,21 +206,27 @@ function KindleHub:showError(msg)
     UIManager:show(InfoMessage:new{ text = _("Kindle Hub: ") .. msg, timeout = 5 })
 end
 
-local function onAirIndex(data)
+local function indexOf(data, name)
     for i, s in ipairs(data.screens) do
-        if s.name == data.on_air then return i end
+        if s.name == name then return i end
     end
-    return 1
+    return nil
 end
 
--- The screen that's on now: the saved copy straight away (no waiting on Wi-Fi), then the
--- fresh one once connected.
-function KindleHub:showNow()
+-- Screen `name`, or the one on now when name is nil.
+local function pickIndex(data, name)
+    if name then return indexOf(data, name) end
+    return indexOf(data, data.on_air) or 1
+end
+
+-- Screen `name` (default: the one on now): the saved copy straight away (no waiting on
+-- Wi-Fi), then the fresh one once connected.
+function KindleHub:showNow(name)
     local cached = self:cachedList()
     local shown = nil
-    if cached then
+    local i = cached and pickIndex(cached, name)
+    if i then
         self.screens = cached.screens
-        local i = onAirIndex(cached)
         if exists(self:imagePath(self.screens[i])) then
             self:display(i, self:imagePath(self.screens[i]))
             shown = self.image_widget
@@ -190,10 +236,44 @@ function KindleHub:showNow()
         if shown and self.image_widget ~= shown then return end   -- closed or swiped meanwhile
         local data, err = self:fetchList()
         if not data then return self:showError(err) end
-        if data.offline then return end         -- nothing newer than what's showing
+        if data.offline and shown then return end   -- nothing newer than what's showing
+        local j = pickIndex(data, name)
+        if not j then return self:showError(tostring(name) .. _(": not on the site any more")) end
         self.screens = data.screens
-        self:showScreen(onAirIndex(data))
+        self:showScreen(j)              -- offline: the saved image, or a message saying why not
     end)
+end
+
+-- Bookshelf card: put the loader where Bookshelf looks for cards, when Bookshelf is installed.
+-- Rewritten only when missing or different (say, KOReader moved). If Bookshelf already
+-- looked for cards in this run, the card is registered with it directly as well.
+function KindleHub:installCard()
+    local lfs = require("libs/libkoreader-lfs")
+    local settings = DataStorage:getSettingsDir()
+    local has_bookshelf = lfs.attributes(PLUGIN_DIR .. "../bookshelf.koplugin", "mode") == "directory"
+        or lfs.attributes(settings .. "/bookshelf", "mode") == "directory"
+    if not has_bookshelf or not exists(CARD_FILE) then return false end
+    local dir = settings .. "/bookshelf/micromodules"
+    if lfs.attributes(dir, "mode") ~= "directory" then
+        lfs.mkdir(settings .. "/bookshelf")
+        lfs.mkdir(dir)
+    end
+    local path = dir .. "/kindlehub.lua"
+    local want = string.format(CARD_LOADER, CARD_FILE)
+    local f = io.open(path, "rb")
+    local have = f and f:read("*a")
+    if f then f:close() end
+    if have == want then return false end
+    local out = io.open(path, "wb")
+    if not out then return false end
+    out:write(want)
+    out:close()
+    local Cards = package.loaded["lib/bookshelf_start_menu_modules"]
+    if type(Cards) == "table" and Cards.register then
+        local ok, spec = pcall(dofile, CARD_FILE)
+        if ok and type(spec) == "table" then Cards.register(spec.key, spec) end
+    end
+    return true
 end
 
 -- Menu → Pick a screen: fetch the list, then offer one button per screen.
@@ -314,6 +394,38 @@ end
 function KindleHub:onKindleHubNow()
     self:showNow()
     return true
+end
+
+-- What the Bookshelf card (bookshelf_card.lua) uses. Lives in package.loaded so the card,
+-- which Bookshelf loads on its own, can find it.
+local API = package.loaded["kindlehub/api"] or {}
+package.loaded["kindlehub/api"] = API
+API.version = 1
+API.cachedList = function()
+    local lfs = require("libs/libkoreader-lfs")
+    local t = lfs.attributes(listCachePath(), "modification")
+    if not t then list_memo = nil return nil end
+    if list_memo and list_memo.mtime == t then return list_memo.data end
+    local data = KindleHub:cachedList()
+    list_memo = data and { mtime = t, data = data } or nil
+    return data
+end
+-- Seconds since the saved list was written, or nil when there isn't one.
+API.listAge = function()
+    local lfs = require("libs/libkoreader-lfs")
+    local t = lfs.attributes(listCachePath(), "modification")
+    return t and os.time() - t or nil
+end
+-- Fetch the list now (blocking); returns it, or nil and a reason.
+API.refreshList = function()
+    local data, err = KindleHub:fetchList()
+    if data and not data.offline then return data end
+    return nil, err or _("can't reach the site")
+end
+-- Open screen `name` full size (nil: the one on now).
+API.show = function(name)
+    local viewer = API.plugin or setmetatable({}, { __index = KindleHub })
+    viewer:showNow(name)
 end
 
 function KindleHub:onKindleHubPick()

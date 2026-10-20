@@ -63,3 +63,14 @@ def fetch(ctx):
         "gap": GAP,
         "pad": PAD,
     }
+
+
+def tile(data):
+    """Summary for the Kindle Hub card on Bookshelf's home screen."""
+    return {
+        "heading": data["quarter"],
+        "value": f"{data['pct']}%",
+        "suffix": "through",
+        "bar": data["passed"] / data["total"],
+        "sub": f"{data['passed']} days passed · {data['left']} left",
+    }

@@ -31,16 +31,50 @@ def write_display_endpoint(ctx: Context, on_air: Plugin, site_dir: Path) -> dict
     return payload
 
 
+TILE_TEXT = {"heading": 60, "value": 24, "suffix": 40, "sub": 80, "context": 80, "text": 200}
+
+
+def make_tile(ctx: Context, p: Plugin) -> dict | None:
+    """A plugin's optional tile(data): the few lines the Kindle Hub card on Bookshelf's home screen
+    shows. Cleaned to short strings (and a 0-1 `bar`); a broken tile is logged and left out."""
+    fn = getattr(p.module, "tile", None)
+    if not fn:
+        return None
+    try:
+        raw = fn(ctx.data[p.name]) or {}
+    except Exception as e:
+        ctx.log(f"{p.name}: tile skipped ({type(e).__name__}: {e})")
+        return None
+    out = {}
+    for key, limit in TILE_TEXT.items():
+        v = raw.get(key)
+        if v is not None and str(v).strip():
+            s = " ".join(str(v).split())
+            out[key] = s if len(s) <= limit else s[: limit - 1].rstrip() + "…"
+    if isinstance(raw.get("bar"), (int, float)):
+        out["bar"] = round(min(1.0, max(0.0, float(raw["bar"]))), 3)
+    return out or None
+
+
 def write_screens_list(ctx: Context, plugins: list[Plugin], rendered: dict, on_air: Plugin | None,
                        site_dir: Path) -> None:
-    """GET <base>/api/screens is what the Kindle Hub KOReader plugin lists for picking a screen."""
+    """GET <base>/api/screens is what the Kindle Hub KOReader plugin lists for picking a screen,
+    and what its Bookshelf card reads (each screen's `tile`)."""
     site = ctx.cfg["site_url"]
+    screens = []
+    for p in plugins:
+        if p.name not in rendered:
+            continue
+        s = {"name": p.name, "title": p.title, "image_url": f"{site}/screens/{p.name}.png?v={ctx.stamp}"}
+        tile = make_tile(ctx, p)
+        if tile:
+            s["tile"] = tile
+        screens.append(s)
     payload = {
         "updated": ctx.now.strftime("%a %d %b, %H:%M"),
+        "updated_epoch": int(ctx.now.timestamp()),
         "on_air": on_air.name if on_air else None,
-        "screens": [{"name": p.name, "title": p.title,
-                     "image_url": f"{site}/screens/{p.name}.png?v={ctx.stamp}"}
-                    for p in plugins if p.name in rendered],
+        "screens": screens,
     }
     api = site_dir / "api"
     api.mkdir(parents=True, exist_ok=True)
