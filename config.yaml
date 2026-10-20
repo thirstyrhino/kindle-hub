@@ -28,8 +28,11 @@ ai:
   # of them as fallbacks (free models rotate, so hard-coding one breaks later).
   # Or list exact model IDs, e.g. ["google/gemini-2.5-flash"] (paid, a few paise a day).
   models: "auto-free"
-  # Preferred families when auto-picking free models, in order.
-  prefer: ["gemini", "deepseek", "llama", "qwen", "mistral", "nemotron"]
+  # Preferred models when auto-picking free models, in order (any part of the model ID).
+  # Strongest free general-purpose models as of Oct 2026; whatever's missing is skipped.
+  prefer: ["thinkingmachines/inkling:free", "nemotron-3-ultra", "gemma-4-31b", "gemma-4", "nemotron-3-super"]
+  # Never auto-pick these: safety classifiers and coding-only models can't write a brief.
+  avoid: ["safety", "guard", "code", "laguna"]
   # What the brief should care about — edit freely, it goes straight into the prompt.
   reader_profile: >
     A product and business leader in Bengaluru working across fintech, payments,

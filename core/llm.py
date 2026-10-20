@@ -28,12 +28,15 @@ def pick_models(ctx: Context) -> list[str]:
     except Exception as e:
         ctx.log(f"could not list OpenRouter models: {e}")
         return []
+    avoid = [a.lower() for a in ai.get("avoid", [])]
     free = []
     for m in listing.get("data", []):
         mid = m.get("id", "")
         pricing = m.get("pricing") or {}
         is_free = mid.endswith(":free") or (str(pricing.get("prompt")) in ("0", "0.0")
                                              and str(pricing.get("completion")) in ("0", "0.0"))
+        if any(a in mid.lower() for a in avoid):
+            continue
         if is_free and m.get("context_length", 0) >= 16000:
             free.append(m)
     prefer = [p.lower() for p in ai.get("prefer", [])]
@@ -84,7 +87,9 @@ def generate_json(ctx: Context, system: str, user: str, max_tokens: int = 1400) 
     attempts += [{"model": m} for m in models]
 
     for attempt in attempts:
-        body = {**attempt, "messages": messages, "temperature": 0.4, "max_tokens": max_tokens}
+        # Thinking models spend max_tokens on reasoning first; keep that short so the JSON fits.
+        body = {**attempt, "messages": messages, "temperature": 0.4, "max_tokens": max_tokens,
+                "reasoning": {"effort": "low"}}
         try:
             r = ctx.session.post(f"{_base()}/chat/completions", json=body, headers=headers, timeout=120)
             if r.status_code != 200:
