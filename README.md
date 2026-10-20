@@ -158,12 +158,12 @@ Everything you're likely to change is in [`config.yaml`](config.yaml):
 
 ## Build your own screen
 
-A screen is one folder under `plugins/`. This countdown is a complete example:
+A screen is one folder under `plugins/` with three files. This countdown is a complete example.
 
-<table><tr>
-<td valign="top">
+<p align="center"><img src="docs/images/screen-countdown-example.png" width="220" alt="Countdown example screen"><br><sub>What it renders</sub></p>
 
-**`plugins/countdown/plugin.yaml`**
+**`plugins/countdown/plugin.yaml`**: its name and when it's shown
+
 ```yaml
 name: countdown
 title: Countdown
@@ -172,23 +172,24 @@ show:
   - "21:00-22:00"
 ```
 
-**`plugins/countdown/fetch.py`**
+**`plugins/countdown/fetch.py`**: gets the data
+
 ```python
 from datetime import date
+
 
 def fetch(ctx):
     target = date(2026, 12, 25)
     days = (target - ctx.now.date()).days
     if days < 0:
-        return {"available": False}  # skip it
-    return {"event": "Holiday", "days": days,
-            "when": target.strftime("%A, %d %B")}
+        return {"available": False}   # date passed: drop out of the rotation
+    return {"event": "Holiday", "days": days, "when": target.strftime("%A, %d %B")}
 ```
 
-**`plugins/countdown/template.liquid`**
+**`plugins/countdown/template.liquid`**: lays it out
+
 ```liquid
-<div class="layout" style="justify-content:center;
-     align-items:center;text-align:center">
+<div class="layout" style="justify-content:center;align-items:center;text-align:center">
   <span class="label">{{ event }}</span>
   <span class="value value--xxlarge">{{ days }}</span>
   <span class="title">days to go</span>
@@ -199,10 +200,6 @@ def fetch(ctx):
   <span class="instance">updated {{ meta.updated }}</span>
 </div>
 ```
-
-</td>
-<td valign="top" align="center"><img src="docs/images/screen-countdown-example.png" width="240" alt="Countdown example screen"><br><sub>What it renders</sub></td>
-</tr></table>
 
 How the pieces fit:
 
