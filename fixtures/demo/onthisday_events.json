@@ -1,0 +1,41 @@
+{
+  "_note": "Sample of Wikipedia's 'On this day' feed for 20 October, shortened, for --demo runs.",
+  "events": [
+    {
+      "text": "The Sydney Opera House is opened by Queen Elizabeth II after 14 years of construction.",
+      "year": 1973,
+      "pages": [{"title": "Sydney_Opera_House", "titles": {"normalized": "Sydney Opera House"},
+        "extract": "The Sydney Opera House is a multi-venue performing arts centre in Sydney, Australia. Designed by Danish architect Jørn Utzon, it is one of the most distinctive buildings of the 20th century and was made a UNESCO World Heritage Site in 2007."}]
+    },
+    {
+      "text": "China launches offensives in Ladakh and across the McMahon Line, beginning the Sino-Indian War.",
+      "year": 1962,
+      "pages": [{"title": "Sino-Indian_War", "titles": {"normalized": "Sino-Indian War"},
+        "extract": "The Sino-Indian War was fought between China and India in October and November 1962 over disputed territory in the Himalayas. It ended when China declared a ceasefire in November 1962."}]
+    },
+    {
+      "text": "American forces land on the island of Leyte, beginning the campaign to retake the Philippines.",
+      "year": 1944,
+      "pages": [{"title": "Battle_of_Leyte", "titles": {"normalized": "Battle of Leyte"},
+        "extract": "The Battle of Leyte was the American and Filipino amphibious invasion of the Philippine island of Leyte during the Second World War."}]
+    },
+    {
+      "text": "The House Un-American Activities Committee opens hearings into alleged Communist influence in Hollywood.",
+      "year": 1947,
+      "pages": [{"title": "Hollywood_blacklist", "titles": {"normalized": "Hollywood blacklist"},
+        "extract": "The Hollywood blacklist kept many actors, screenwriters and directors out of work in the American film industry from the late 1940s onwards."}]
+    },
+    {
+      "text": "Former Libyan leader Muammar Gaddafi is killed in Sirte.",
+      "year": 2011,
+      "pages": [{"title": "Muammar_Gaddafi", "titles": {"normalized": "Muammar Gaddafi"},
+        "extract": "Muammar Gaddafi ruled Libya from 1969 until he was overthrown in the 2011 Libyan civil war."}]
+    },
+    {
+      "text": "The United States and the United Kingdom sign the Convention of 1818, setting much of the US–Canada border along the 49th parallel.",
+      "year": 1818,
+      "pages": [{"title": "Treaty_of_1818", "titles": {"normalized": "Treaty of 1818"},
+        "extract": "The Treaty of 1818 between the United States and the United Kingdom settled boundary questions, including the border along the 49th parallel from the Lake of the Woods to the Rocky Mountains."}]
+    }
+  ]
+}

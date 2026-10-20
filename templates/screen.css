@@ -48,3 +48,16 @@ html, body { width: var(--w); height: var(--h); background: var(--paper); color:
 .bullets { list-style: none; display: flex; flex-direction: column; gap: 9px; }
 .bullets li { position: relative; padding-left: 22px; font-size: 18.5px; font-weight: 500; line-height: 1.32; }
 .bullets li::before { content: ""; position: absolute; left: 2px; top: .5em; width: 9px; height: 9px; background: var(--ink); }
+
+/* "Clean" style, after TRMNL's recipes: thin stripes, big light numbers, rounded title bar.
+   Used by quarter_progress and year_of_the_day. */
+.layout--clean { padding: 12px 12px 0; gap: 14px; }
+.stripe { display: flex; gap: 14px; }
+.stripe::before { content: ""; width: 7px; flex: none; background: #bbb; }
+.heading { font: 400 44px/1.05 "Inter Display", Inter, sans-serif; letter-spacing: -.01em; padding: 4px 0 2px; }
+.value--thin { font: 300 128px/.92 "Inter Display", Inter, sans-serif; letter-spacing: -.035em;
+  font-variant-numeric: tabular-nums; padding-top: 6px; }
+.caption { font: 600 19px/1.2 Inter, sans-serif; color: #222; padding: 6px 0 4px; }
+.title_bar--pill { margin: 0 12px 12px; height: 52px; border-top: 0; border-radius: 10px; background: #e6e6e6; padding: 0 16px; }
+.title_bar--pill .title { font-size: 19px; font-weight: 600; text-transform: none; letter-spacing: 0; }
+.title_bar--pill .instance { font-size: 18px; font-weight: 600; color: #000; }

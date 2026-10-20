@@ -1,0 +1,11 @@
+name: year_of_the_day
+title: Year of the Day
+order: 45
+show:                    # 11:xx and 23:xx (alternating with weather); the 23:37 screen stays up overnight
+  - "11:00-12:00"
+  - "23:00-23:59"
+settings:
+  # Words that make an event preferred when choosing the day's year, e.g. ["India", "Bengaluru"].
+  # Leave empty for any event.
+  prefer: []
+  also_count: 4          # other years (as many as fit are shown) shown under "Also on this day"

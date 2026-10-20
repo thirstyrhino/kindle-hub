@@ -18,7 +18,8 @@ def indian(n: float, decimals: int = 2) -> str:
 
 
 def strip_html(text: str, limit: int = 0) -> str:
-    text = html.unescape(re.sub(r"<[^>]+>", " ", text or ""))
+    text = re.sub(r"<(?:br|/?p|/?div|/?li|/?h\d)\b[^>]*>", " ", text or "", flags=re.I)  # block tags -> space
+    text = html.unescape(re.sub(r"<[^>]+>", "", text))                                       # inline tags -> nothing
     text = re.sub(r"\s+", " ", text).strip()
     if limit and len(text) > limit:
         text = text[: limit - 1].rsplit(" ", 1)[0] + "…"

@@ -23,7 +23,9 @@ TMP = ROOT / "build" / "docs"
 SCREENS = [("morning_brief", "Morning brief", "05:30–10:00"),
            ("weather_aqi", "Weather & air", "10:00–13:00 · evenings"),
            ("markets", "Markets", "13:00–16:00"),
-           ("quarter_progress", "Quarter progress", "evenings")]
+           ("quarter_progress", "Quarter progress", "evenings"),
+           ("year_of_the_day", "Year of the day", "11:00 · overnight")]
+HERO = ["morning_brief", "weather_aqi", "quarter_progress", "year_of_the_day"]  # 4 fit the README width
 
 
 def run_build(out: str, at: str, extra_env: dict | None = None) -> Path:
@@ -84,7 +86,7 @@ def main() -> None:
     screens = {name: site / "screens" / f"{name}.png" for name, _, _ in SCREENS}
 
     # 1. Hero: three devices side by side
-    shoot(page("".join(device(screens[n], t, s, scale=0.75) for n, t, s in SCREENS), gap=54, pad=60),
+    shoot(page("".join(device(screens[n], t, s, scale=0.75) for n, t, s in SCREENS if n in HERO), gap=54, pad=60),
           OUT / "hero.png", 2400)
 
     # 2. Raw screens exactly as the Kindle gets them (600x800, 16 greys)

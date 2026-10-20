@@ -5,7 +5,7 @@ An AI-written brief arrives as an ebook every morning, and the screen rotates th
 weather, air quality and markets during the day. It runs entirely on GitHub's free tier:
 nothing to host, nothing to keep switched on at home.
 
-![Four Kindle screens: the morning brief, weather and air quality, markets, and quarter progress](docs/images/hero.png)
+![Four Kindle screens: the morning brief, weather and air quality, quarter progress, and year of the day](docs/images/hero.png)
 
 <sub>Screens shown with sample data. They are rendered at the Kindle's exact resolution (600×800) in 16 shades of grey.</sub>
 
@@ -18,7 +18,8 @@ nothing to host, nothing to keep switched on at home.
   markets. KOReader downloads it as an ebook with one tap.
 - **A dashboard that changes through the day.** Leave the Kindle on a stand and it shows the
   brief in the morning, weather and air quality at midday, markets in the afternoon, and the
-  forecast and quarter progress in the evening. It updates every hour.
+  forecast and quarter progress in the evening, and a year from history overnight. It updates
+  every hour.
 - **₹0 to run.** GitHub Actions builds everything on a schedule and GitHub Pages hosts it. The
   AI uses OpenRouter's free models (one call a day). Weather and air quality come from
   Open-Meteo, which needs no key.
@@ -43,6 +44,14 @@ nothing to host, nothing to keep switched on at home.
 <tr>
 <td valign="top">Nifty 50, Sensex and USD/INR with the day's move and a one-month trend line.</td>
 <td valign="top">One square per day of the quarter (passed, today, still to come), with days passed and days left. Same clean look as TRMNL's <a href="https://trmnl.com/recipes/quarter-progress-212805">Quarter Progress</a> recipe, set out for a portrait screen. Switch to April–March financial-year quarters in its <code>plugin.yaml</code>.</td>
+</tr>
+<tr>
+<td align="center"><img src="docs/images/screen-year_of_the_day.png" width="300" alt="Year of the day screen"><br><b>Year of the day</b><br><sub>11:00–12:00 and 23:00 (stays up overnight)</sub></td>
+<td align="center"><img src="docs/images/screen-countdown-example.png" width="300" alt="Example custom countdown screen"><br><b>Your own screen</b><br><sub>a countdown, in three small files</sub></td>
+</tr>
+<tr>
+<td valign="top">A year in history picked from Wikipedia's "On this day" events for today's date: what happened, a short background, and a few other years for the same date. Like TRMNL's <a href="https://trmnl.com/recipes/year-of-the-day-148248">Year of the Day</a> recipe (text version). Set <code>prefer: ["India"]</code> in its <code>plugin.yaml</code> to favour events you care about.</td>
+<td valign="top">Every screen is a folder you can copy. See <a href="#build-your-own-screen">Build your own screen</a>.</td>
 </tr>
 </table>
 

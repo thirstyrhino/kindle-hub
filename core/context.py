@@ -14,7 +14,7 @@ import requests
 import yaml
 
 ROOT = Path(__file__).resolve().parent.parent
-UA = "kindle-hub/1.0 (+https://github.com)"
+UA = "kindle-hub/1.0 (+https://github.com/thirstyrhino/kindle-hub)"  # Wikimedia asks for a contact URL
 PLACEHOLDER = "YOUR-GITHUB-USERNAME"
 
 

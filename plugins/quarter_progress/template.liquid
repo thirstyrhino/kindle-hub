@@ -1,31 +1,20 @@
 <style>
-  .qp { padding: {{ pad }}px {{ pad }}px 0; gap: 14px; }
-  .qp .stripe { display: flex; gap: 14px; }
-  .qp .stripe::before { content: ""; width: 7px; flex: none; background: #bbb; }
-  .qp .q { font: 400 44px/1.05 "Inter Display", Inter, sans-serif; letter-spacing: -.01em; padding: 4px 0 2px; }
-  .qp .num { font: 300 128px/.92 "Inter Display", Inter, sans-serif; letter-spacing: -.035em;
-             font-variant-numeric: tabular-nums; padding-top: 6px; }
-  .qp .cap { font: 600 19px/1.2 Inter, sans-serif; color: #222; padding: 6px 0 4px; }
   .qp .grid { display: grid; grid-template-columns: repeat({{ grid_cols }}, {{ grid_size }}px);
               grid-auto-rows: {{ grid_size }}px; gap: {{ gap }}px; justify-content: space-between; }
   .qp .d { border-radius: 8px; }
   .qp .past { background: #666; box-shadow: inset 0 0 0 2px #333; }
   .qp .today { background: #222; box-shadow: inset 0 0 0 2px #000; }
   .qp .future { background: #ddd; box-shadow: inset 0 0 0 2px #bbb; }
-  .pill { margin: 0 {{ pad }}px {{ pad }}px; height: 52px; border-top: 0; border-radius: 10px;
-          background: #e6e6e6; padding: 0 16px; }
-  .pill .title { font-size: 19px; font-weight: 600; text-transform: none; letter-spacing: 0; }
-  .pill .instance { font-size: 18px; font-weight: 600; color: #000; }
 </style>
-<div class="layout qp">
-  <div class="stripe"><span class="q">{{ quarter }}</span></div>
+<div class="layout layout--clean qp">
+  <div class="stripe"><span class="heading">{{ quarter }}</span></div>
   <div class="flex" style="gap:12px">
-    <div class="stripe" style="width:50%"><div class="flex col"><span class="num">{{ passed }}</span><span class="cap">Days Passed</span></div></div>
-    <div class="stripe" style="width:50%"><div class="flex col"><span class="num">{{ left }}</span><span class="cap">Days Left</span></div></div>
+    <div class="stripe" style="width:50%"><div class="flex col"><span class="value--thin">{{ passed }}</span><span class="caption">Days Passed</span></div></div>
+    <div class="stripe" style="width:50%"><div class="flex col"><span class="value--thin">{{ left }}</span><span class="caption">Days Left</span></div></div>
   </div>
   <div class="grid">{% for s in days %}<div class="d {{ s }}"></div>{% endfor %}</div>
 </div>
-<div class="title_bar pill">
+<div class="title_bar title_bar--pill">
   {{ meta.glyph }}<span class="title">{{ meta.title }}</span>
   <span class="instance">{{ quarter }} · {{ pct }}%</span>
 </div>

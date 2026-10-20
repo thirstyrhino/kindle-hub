@@ -1,0 +1,27 @@
+<style>
+  .yd { padding-bottom: 14px; }
+  .yd .event { font: 600 25px/1.26 Inter, sans-serif; letter-spacing: -.01em; }
+  .yd .extract { font: 400 18px/1.42 Inter, sans-serif; color: #222; }
+  .yd .also { font: 700 14px/1 Inter, sans-serif; letter-spacing: .1em; text-transform: uppercase; color: #222; }
+  .yd .row { display: flex; gap: 14px; align-items: baseline; }
+  .yd .row b { font: 600 22px/1.2 "Inter Display", Inter, sans-serif; width: 70px; flex: none; }
+  .yd .row span { font: 500 17px/1.32 Inter, sans-serif; }
+</style>
+<div class="layout layout--clean yd">
+  <div class="stripe"><span class="heading">{{ date_long }}</span></div>
+  <div class="stripe"><div class="flex col">
+    <span class="value--thin">{{ main.label }}</span>
+    <span class="caption">{{ main.ago }} years ago</span>
+  </div></div>
+  <span class="event clamp-4">{{ main.text }}</span>
+  {% if main.extract != blank %}<span class="extract clamp-5">{{ main.extract }}</span>{% endif %}
+  <div style="height:2px;background:#bbb;flex:none"></div>
+  <span class="also">Also on this day</span>
+  <div class="flex col grow" style="gap:12px;overflow:hidden" data-fit>
+    {% for e in others %}<div class="row" data-fit-item><b>{{ e.label }}</b><span class="clamp-2">{{ e.text }}</span></div>{% endfor %}
+  </div>
+</div>
+<div class="title_bar title_bar--pill">
+  {{ meta.glyph }}<span class="title">{{ meta.title }}</span>
+  <span class="instance">Wikipedia · On this day</span>
+</div>
