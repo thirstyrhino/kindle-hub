@@ -6,7 +6,22 @@
   .yd .row { display: flex; gap: 14px; align-items: baseline; }
   .yd .row b { font: 600 22px/1.2 "Inter Display", Inter, sans-serif; width: 70px; flex: none; }
   .yd .row span { font: 500 17px/1.32 Inter, sans-serif; }
+  .yd .art { width: {{ image_w }}px; height: {{ image_h }}px; flex: none; border-radius: 10px; overflow: hidden;
+             box-shadow: inset 0 0 0 2px #000; }
+  .yd .art img { display: block; width: {{ image_w }}px; height: {{ image_h }}px; }
+  .yd .ago { margin-left: auto; align-self: center; font: 600 19px/1 Inter, sans-serif; color: #222; }
 </style>
+{% if image %}
+<div class="layout layout--clean yd">
+  <div class="stripe"><span class="heading">{{ date_long }} {{ main.label }}</span><span class="ago">{{ main.ago }} years ago</span></div>
+  <div class="art"><img src="{{ image }}" alt=""></div>
+  <span class="event clamp-3">{{ main.text }}</span>
+</div>
+<div class="title_bar title_bar--pill">
+  {{ meta.glyph }}<span class="title">{{ meta.title }}</span>
+  <span class="instance">AI illustration · Wikipedia</span>
+</div>
+{% else %}
 <div class="layout layout--clean yd">
   <div class="stripe"><span class="heading">{{ date_long }}</span></div>
   <div class="stripe"><div class="flex col">
@@ -25,3 +40,4 @@
   {{ meta.glyph }}<span class="title">{{ meta.title }}</span>
   <span class="instance">Wikipedia · On this day</span>
 </div>
+{% endif %}

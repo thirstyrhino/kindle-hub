@@ -90,6 +90,10 @@ def write_run_summary(ctx, plugins, rendered, on_air) -> None:
             result = f"skipped: {d.get('error', 'no data')}"[:160]
         elif p.name == "morning_brief":
             result = f"AI brief by `{d['model']}`" if d.get("ai") else "headlines only (AI unavailable or no key)"
+        elif p.name == "year_of_the_day":
+            result = (f"{d['mode']} illustration" if d.get("image")
+                      else "text" + (" (image mode set, but no Cloudflare keys or the image failed)"
+                                     if p.settings.get("mode", "text") != "text" else ""))
         else:
             result = "rendered"
         rows.append(f"| {p.title}{' (on air)' if on_air and p.name == on_air.name else ''} | {result} |")

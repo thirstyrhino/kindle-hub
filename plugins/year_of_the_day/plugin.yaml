@@ -5,7 +5,11 @@ show:                    # 11:xx and 23:xx (alternating with weather); the 23:37
   - "11:00-12:00"
   - "23:00-23:59"
 settings:
+  # text      = year, what happened, background, other years
+  # comic     = AI comic-panel illustration of the event (needs the Cloudflare secrets; else falls back to text)
+  # newspaper = AI vintage-newspaper halftone illustration (same)
+  mode: comic
   # Words that make an event preferred when choosing the day's year, e.g. ["India", "Bengaluru"].
-  # Leave empty for any event.
   prefer: []
-  also_count: 4          # other years (as many as fit are shown) shown under "Also on this day"
+  also_count: 4          # other years in text mode (as many as fit are shown)
+  # image_model: "@cf/black-forest-labs/flux-1-schnell"   # any Workers AI text-to-image model

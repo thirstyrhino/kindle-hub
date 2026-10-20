@@ -97,16 +97,19 @@ def main() -> None:
     fb = TMP / "fixtures"
     shutil.copytree(ROOT / "fixtures", fb)
     (fb / "demo" / "llm_brief.json").write_text('{"unusable": true}')
+    (fb / "demo" / "yotd_illustration.png").unlink()      # no image -> Year of the Day text layout
     real = ROOT / "fixtures"
     backup = ROOT / "build" / "fixtures.bak"
     shutil.move(real, backup)
     try:
         shutil.copytree(fb, real)
         fsite = run_build("build/docs/fallback", "07:00")
+        run_build("build/docs/fallback_yotd", "11:30")
     finally:
         shutil.rmtree(real)
         shutil.move(backup, real)
     shutil.copyfile(fsite / "screens" / "morning_brief.png", OUT / "screen-morning_brief-fallback.png")
+    shutil.copyfile(ROOT / "build/docs/fallback_yotd/screens/year_of_the_day.png", OUT / "screen-year_of_the_day-text.png")
 
     # 4. The site's index page
     with sync_playwright() as pw:

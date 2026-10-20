@@ -7,7 +7,7 @@ nothing to host, nothing to keep switched on at home.
 
 ![Four Kindle screens: the morning brief, weather and air quality, quarter progress, and year of the day](docs/images/hero.png)
 
-<sub>Screens shown with sample data. They are rendered at the Kindle's exact resolution (600×800) in 16 shades of grey.</sub>
+<sub>Screens shown with sample data (the Year of the Day picture is a hand-drawn stand-in for an AI one). They are rendered at the Kindle's exact resolution (600×800) in 16 shades of grey.</sub>
 
 ---
 
@@ -50,7 +50,7 @@ nothing to host, nothing to keep switched on at home.
 <td align="center"><img src="docs/images/screen-countdown-example.png" width="300" alt="Example custom countdown screen"><br><b>Your own screen</b><br><sub>a countdown, in three small files</sub></td>
 </tr>
 <tr>
-<td valign="top">A year in history picked from Wikipedia's "On this day" events for today's date: what happened, a short background, and a few other years for the same date. Like TRMNL's <a href="https://trmnl.com/recipes/year-of-the-day-148248">Year of the Day</a> recipe (text version). Set <code>prefer: ["India"]</code> in its <code>plugin.yaml</code> to favour events you care about.</td>
+<td valign="top">A year in history from Wikipedia's "On this day" events for today's date, drawn as an <b>AI comic panel</b> (or a vintage-newspaper illustration) with the headline, like TRMNL's <a href="https://trmnl.com/recipes/year-of-the-day-148248">Year of the Day</a> recipe. The picture is made once a day for free on Cloudflare. Without Cloudflare keys it shows the <a href="docs/images/screen-year_of_the_day-text.png">text version</a> instead. <sub>The picture above is a hand-drawn stand-in for the demo.</sub></td>
 <td valign="top">Every screen is a folder you can copy. See <a href="#build-your-own-screen">Build your own screen</a>.</td>
 </tr>
 </table>
@@ -101,7 +101,13 @@ You need a Kindle that's already jailbroken with KOReader installed, and about 2
    `OPENROUTER_API_KEY` and paste the key.
    > No key? Everything still works. The brief becomes a plain list of top headlines.
 2. **Turn on Pages.** **Settings → Pages → Build and deployment → Source: GitHub Actions.**
-3. **Run it once.** **Actions → Build Kindle site → Run workflow** (mode: `full`).
+3. **Optional: AI pictures for Year of the Day.** Make a free [Cloudflare](https://dash.cloudflare.com/sign-up)
+   account, open **AI → Workers AI → Use REST API**, copy the **Account ID**, then click
+   **Create a Workers AI API Token** and copy the token. Add both as repository secrets:
+   `CLOUDFLARE_ACCOUNT_ID` and `CLOUDFLARE_API_TOKEN`.
+   > One picture a day uses under 1% of Cloudflare's free daily allowance. Skip this step and the
+   > screen simply shows the text version.
+4. **Run it once.** **Actions → Build Kindle site → Run workflow** (mode: `full`).
    When it turns green, open <https://thirstyrhino.github.io/kindle-hub/>.
 
 Each run's page on GitHub starts with a short summary of what happened:
@@ -147,6 +153,7 @@ Each part fails on its own, and the Kindle never ends up blank.
 
 | If this fails | What you see |
 |---|---|
+| The Year of the Day picture (no Cloudflare keys, or an error) | The text version of the screen |
 | The AI (no key, rate limit, bad answer) | The brief switches to **Headlines only**: the top stories from your feeds, no summary |
 | A news feed | That feed is skipped; the others still go in |
 | Weather or markets | That screen drops out of the rotation until the next run that works |
@@ -174,6 +181,10 @@ Everything you're likely to change is in [`config.yaml`](config.yaml):
 | `screen.refresh_seconds` | How often the Kindle asks for a new screen |
 
 - **When each screen shows:** the `show:` times in each screen's `plugins/<name>/plugin.yaml`.
+- **Year of the Day style:** in `plugins/year_of_the_day/plugin.yaml`, set `mode:` to `comic`
+  (default), `newspaper` or `text`. Add words to `prefer:` (e.g. `["India"]`) to favour those events.
+  Picture modes skip events built around a death or an attack, and never put real people's faces
+  front and centre.
 - **Financial-year quarters:** in `plugins/quarter_progress/plugin.yaml`, set
   `fiscal_year_start: 4`. October–December then shows as **Q3 FY27**.
 - **When the builds run:** `.github/workflows/build.yml`. Cron times are UTC (IST = UTC + 5:30).
@@ -292,4 +303,6 @@ assets/fonts/             Inter typeface (SIL Open Font License, included)
 [TRMNL framework](https://trmnl.com/framework) this borrows its class names from ·
 [Open-Meteo](https://open-meteo.com) for weather and air quality ·
 [OpenRouter](https://openrouter.ai) for the AI models ·
+[Cloudflare Workers AI](https://developers.cloudflare.com/workers-ai/) running FLUX.1 [schnell] for the illustrations ·
+[Wikipedia](https://www.wikipedia.org) for On this day ·
 [Inter](https://rsms.me/inter/) by Rasmus Andersson.
