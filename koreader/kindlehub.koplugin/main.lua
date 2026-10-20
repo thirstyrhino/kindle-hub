@@ -165,13 +165,14 @@ function KindleHub:wrap(image, w, h)
         return true
     end
     widget.onKHClose = close
+    -- Swipes are often a little diagonal ("northwest"), so match on the horizontal part.
+    -- Up/down swipes do nothing; only a tap closes.
     widget.onKHSwipe = function(_, _, ges)
-        if ges.direction == "west" then
+        local dir = ges and ges.direction or ""
+        if dir:find("west") then
             self:showScreen(self.index + 1)
-        elseif ges.direction == "east" then
+        elseif dir:find("east") then
             self:showScreen(self.index - 1)
-        else
-            return close()
         end
         return true
     end
@@ -182,7 +183,7 @@ function KindleHub:wrap(image, w, h)
     end
     if Device:isTouchDevice() then
         local function anywhere(ges)
-            return {{ GestureRange:new{ ges = ges, range = Geom:new{ x = 0, y = 0, w = w, h = h } } }}
+            return { GestureRange:new{ ges = ges, range = Geom:new{ x = 0, y = 0, w = w, h = h } } }
         end
         widget.ges_events = { KHClose = anywhere("tap"), KHSwipe = anywhere("swipe") }
     end
