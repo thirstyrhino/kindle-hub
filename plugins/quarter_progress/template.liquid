@@ -1,0 +1,57 @@
+<div class="layout" style="gap:16px;justify-content:space-between">
+  <div class="flex between end">
+    <div class="flex col gap-s">
+      <span class="label">{{ quarter }} · {{ range }}</span>
+      <span class="value value--xxlarge">{{ pct }}<span style="font-size:64px;letter-spacing:0">%</span></span>
+    </div>
+    <div class="flex col" style="gap:10px;padding-bottom:6px;min-width:190px">
+      <div class="flex end gap-m"><span class="value value--small" style="width:62px;text-align:right">{{ day }}</span><span class="description">day of {{ total }}</span></div>
+      <div class="flex end gap-m"><span class="value value--small" style="width:62px;text-align:right">{{ days_left }}</span><span class="description">days left</span></div>
+      <div class="flex end gap-m"><span class="value value--small" style="width:62px;text-align:right">{{ weekdays_left }}</span><span class="description">weekdays left</span></div>
+    </div>
+  </div>
+
+  <div class="divider"></div>
+
+  <!-- one column per week, one square per day; filled in column order -->
+  <div style="display:grid;grid-auto-flow:column;gap:{{ gap }}px;
+       grid-template-rows:18px repeat(7, {{ cell }}px);
+       grid-template-columns:{{ label_w }}px;grid-auto-columns:{{ cell }}px;justify-content:space-between">
+    <span></span>
+    {% assign weekdays = "M,T,W,T,F,S,S" | split: "," %}
+    {% for d in weekdays %}<span class="label" style="font-size:12px;line-height:{{ cell }}px;letter-spacing:0">{{ d }}</span>{% endfor %}
+    {% for w in weeks %}
+      <span class="label" style="font-size:12px;letter-spacing:.04em;white-space:nowrap;overflow:visible">{{ w.label }}</span>
+      {% for c in w.cells %}
+        {% case c.state %}
+          {% when "past" %}<div style="background:#777;border-radius:4px">{% if c.first %}<span style="display:block;text-align:center;font:700 12px/{{ cell }}px Inter;color:#fff">1</span>{% endif %}</div>
+          {% when "today" %}<div style="background:#000;border-radius:4px;box-shadow:0 0 0 3px #fff, 0 0 0 5px #000">{% if c.first %}<span style="display:block;text-align:center;font:700 12px/{{ cell }}px Inter;color:#fff">1</span>{% endif %}</div>
+          {% when "future" %}<div style="border:2px solid #000;border-radius:4px">{% if c.first %}<span style="display:block;text-align:center;font:700 12px/{{ cell | minus: 4 }}px Inter;color:#000">1</span>{% endif %}</div>
+          {% else %}<div></div>
+        {% endcase %}
+      {% endfor %}
+    {% endfor %}
+  </div>
+
+  <div class="flex col" style="gap:10px">
+    {% for m in months %}
+    <div class="flex center-y gap-m">
+      <span class="title title--small" style="width:118px;font-size:18px">{{ m.name }}</span>
+      <div class="grow" style="height:16px;border:2px solid #000"><div style="height:100%;width:{{ m.pct }}%;background:#000"></div></div>
+      <span class="description" style="width:104px;text-align:right;font-size:15px">{{ m.note }}</span>
+    </div>
+    {% endfor %}
+  </div>
+
+  <div class="divider divider--thin"></div>
+
+  <div class="flex center-y gap-m">
+    <span class="label" style="width:118px">{{ year.label }}</span>
+    <div class="grow" style="height:10px;background:#ddd"><div style="height:100%;width:{{ year.pct }}%;background:#000"></div></div>
+    <span class="description" style="width:104px;text-align:right;font-size:15px">{{ year.pct }}% · {{ year.days_left }}d left</span>
+  </div>
+</div>
+<div class="title_bar">
+  {{ meta.glyph }}<span class="title">{{ meta.title }}</span>
+  <span class="instance">{{ meta.date_short }}</span>
+</div>

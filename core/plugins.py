@@ -1,7 +1,7 @@
 """Plugin discovery and the time-of-day playlist.
 
 A plugin is a folder under plugins/ with:
-  plugin.yaml      name, title, order, show windows
+  plugin.yaml      name, title, order, show windows, optional settings
   fetch.py         def fetch(ctx) -> dict   (optional: def publish(ctx, data, site_dir))
   template.liquid  markup rendered into a Kindle-sized screen
 """
@@ -26,6 +26,7 @@ class Plugin:
     show: list[str]
     enabled: bool
     folder: Path
+    settings: dict
     module: ModuleType
 
     @property
@@ -59,7 +60,8 @@ def load_plugins(only: list[str] | None = None) -> list[Plugin]:
         assert spec.loader
         spec.loader.exec_module(module)
         plugins.append(Plugin(name=name, title=meta.get("title", name), order=int(meta.get("order", 50)),
-                              show=list(meta.get("show", [])), enabled=True, folder=folder, module=module))
+                              show=list(meta.get("show", [])), enabled=True, folder=folder, module=module,
+                              settings=dict(meta.get("settings") or {})))
     return sorted(plugins, key=lambda p: p.order)
 
 

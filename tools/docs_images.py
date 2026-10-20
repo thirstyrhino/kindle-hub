@@ -22,7 +22,8 @@ OUT = ROOT / "docs" / "images"
 TMP = ROOT / "build" / "docs"
 SCREENS = [("morning_brief", "Morning brief", "05:30–10:00"),
            ("weather_aqi", "Weather & air", "10:00–13:00 · evenings"),
-           ("markets", "Markets", "13:00–16:00")]
+           ("markets", "Markets", "13:00–16:00"),
+           ("quarter_progress", "Quarter progress", "evenings")]
 
 
 def run_build(out: str, at: str, extra_env: dict | None = None) -> Path:
@@ -83,7 +84,8 @@ def main() -> None:
     screens = {name: site / "screens" / f"{name}.png" for name, _, _ in SCREENS}
 
     # 1. Hero: three devices side by side
-    shoot(page("".join(device(screens[n], t, s) for n, t, s in SCREENS)), OUT / "hero.png", 2400)
+    shoot(page("".join(device(screens[n], t, s, scale=0.75) for n, t, s in SCREENS), gap=54, pad=60),
+          OUT / "hero.png", 2400)
 
     # 2. Raw screens exactly as the Kindle gets them (600x800, 16 greys)
     for name, _, _ in SCREENS:

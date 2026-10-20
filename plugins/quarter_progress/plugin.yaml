@@ -1,0 +1,9 @@
+name: quarter_progress
+title: Quarter Progress
+order: 40
+show:                    # shares the evening with weather; they alternate hourly
+  - "18:00-22:00"
+settings:
+  # Month the year starts. 1 = calendar quarters (Q1 = Jan–Mar).
+  # 4 = Indian financial year (Q1 = Apr–Jun, labelled FY27 etc.).
+  fiscal_year_start: 1

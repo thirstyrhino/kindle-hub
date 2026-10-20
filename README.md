@@ -5,7 +5,7 @@ An AI-written brief arrives as an ebook every morning, and the screen rotates th
 weather, air quality and markets during the day. It runs entirely on GitHub's free tier:
 nothing to host, nothing to keep switched on at home.
 
-![Three Kindle screens: the morning brief, weather and air quality, and markets](docs/images/hero.png)
+![Four Kindle screens: the morning brief, weather and air quality, markets, and quarter progress](docs/images/hero.png)
 
 <sub>Screens shown with sample data. They are rendered at the Kindle's exact resolution (600×800) in 16 shades of grey.</sub>
 
@@ -17,8 +17,8 @@ nothing to host, nothing to keep switched on at home.
   picks the stories that matter to you and writes a one-page summary with today's weather and
   markets. KOReader downloads it as an ebook with one tap.
 - **A dashboard that changes through the day.** Leave the Kindle on a stand and it shows the
-  brief in the morning, weather and air quality at midday, markets in the afternoon and the
-  forecast in the evening. It updates every hour.
+  brief in the morning, weather and air quality at midday, markets in the afternoon, and the
+  forecast and quarter progress in the evening. It updates every hour.
 - **₹0 to run.** GitHub Actions builds everything on a schedule and GitHub Pages hosts it. The
   AI uses OpenRouter's free models (one call a day). Weather and air quality come from
   Open-Meteo, which needs no key.
@@ -29,14 +29,20 @@ nothing to host, nothing to keep switched on at home.
 
 <table>
 <tr>
-<td align="center" width="33%"><img src="docs/images/screen-morning_brief.png" width="260" alt="Morning brief screen"><br><b>Morning brief</b><br><sub>05:30–10:00 and 13:00–14:00</sub></td>
-<td align="center" width="33%"><img src="docs/images/screen-weather_aqi.png" width="260" alt="Weather and air quality screen"><br><b>Weather &amp; air</b><br><sub>10:00–13:00 and 16:00–05:59</sub></td>
-<td align="center" width="33%"><img src="docs/images/screen-markets.png" width="260" alt="Markets screen"><br><b>Markets</b><br><sub>13:00–16:00</sub></td>
+<td align="center" width="50%"><img src="docs/images/screen-morning_brief.png" width="300" alt="Morning brief screen"><br><b>Morning brief</b><br><sub>05:30–10:00 and 13:00–14:00</sub></td>
+<td align="center" width="50%"><img src="docs/images/screen-weather_aqi.png" width="300" alt="Weather and air quality screen"><br><b>Weather &amp; air</b><br><sub>10:00–13:00 and 16:00–05:59</sub></td>
 </tr>
 <tr>
 <td valign="top">AI headline, three takeaways, the top stories that fit on screen, a weather strip and one focus for the day.</td>
 <td valign="top">Temperature now, US AQI on a scale with PM2.5 and PM10, a 4-day forecast and sunrise/sunset for Bengaluru.</td>
+</tr>
+<tr>
+<td align="center"><img src="docs/images/screen-markets.png" width="300" alt="Markets screen"><br><b>Markets</b><br><sub>13:00–16:00</sub></td>
+<td align="center"><img src="docs/images/screen-quarter_progress.png" width="300" alt="Quarter progress screen"><br><b>Quarter progress</b><br><sub>18:00–22:00, alternating with weather</sub></td>
+</tr>
+<tr>
 <td valign="top">Nifty 50, Sensex and USD/INR with the day's move and a one-month trend line.</td>
+<td valign="top">One square per day of the quarter (done, today, to come), how far through it you are, days and weekdays left, plus month and year bars. Like TRMNL's <a href="https://trmnl.com/recipes/quarter-progress-212805">Quarter Progress</a> recipe, set out for a portrait screen. Switch to April–March financial-year quarters in its <code>plugin.yaml</code>.</td>
 </tr>
 </table>
 
@@ -154,6 +160,8 @@ Everything you're likely to change is in [`config.yaml`](config.yaml):
 | `screen.refresh_seconds` | How often the Kindle asks for a new screen |
 
 - **When each screen shows:** the `show:` times in each screen's `plugins/<name>/plugin.yaml`.
+- **Financial-year quarters:** in `plugins/quarter_progress/plugin.yaml`, set
+  `fiscal_year_start: 4`. October–December then shows as **Q3 FY27** and the year bar tracks FY27.
 - **When the builds run:** `.github/workflows/build.yml`. Cron times are UTC (IST = UTC + 5:30).
 
 ## Build your own screen
@@ -167,7 +175,7 @@ A screen is one folder under `plugins/` with three files. This countdown is a co
 ```yaml
 name: countdown
 title: Countdown
-order: 40
+order: 50
 show:
   - "21:00-22:00"
 ```
@@ -205,6 +213,7 @@ How the pieces fit:
 
 - **`fetch(ctx)`** returns a dictionary. Its keys become template variables. Return
   `{"available": False}` to skip the screen for this run.
+- **Settings:** anything under `settings:` in a screen's `plugin.yaml` is available as `ctx.settings`.
 - **Fetching data:** `ctx.get_json(url, params=...)` (with retries), `ctx.cfg` for `config.yaml`,
   `ctx.now` for the time in IST, and `ctx.usable("weather_aqi")` for another screen's data.
   Screens run in `order`, lowest first.

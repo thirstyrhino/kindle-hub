@@ -40,6 +40,7 @@ class Context:
     demo: bool = False            # use fixtures/ instead of the network
     now: datetime = None          # type: ignore[assignment]
     data: dict[str, Any] = field(default_factory=dict)   # plugin name -> fetched data
+    settings: dict[str, Any] = field(default_factory=dict)  # current plugin's plugin.yaml settings
     _previous: dict[str, Any] = field(default_factory=dict)
     session: requests.Session = field(default_factory=requests.Session)
 

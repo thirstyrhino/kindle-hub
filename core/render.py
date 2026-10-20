@@ -19,6 +19,7 @@ FONTS = [  # family, file, weight
 GLYPHS = {  # small title-bar icons
     "morning_brief": '<svg class="glyph" viewBox="0 0 26 26"><rect x="3" y="4" width="20" height="18" fill="none" stroke="#000" stroke-width="3"/><line x1="7" y1="10" x2="19" y2="10" stroke="#000" stroke-width="3"/><line x1="7" y1="15" x2="15" y2="15" stroke="#000" stroke-width="3"/></svg>',
     "weather_aqi": '<svg class="glyph" viewBox="0 0 26 26"><circle cx="13" cy="13" r="6" fill="none" stroke="#000" stroke-width="3"/><g stroke="#000" stroke-width="3" stroke-linecap="round"><line x1="13" y1="1.5" x2="13" y2="4"/><line x1="13" y1="22" x2="13" y2="24.5"/><line x1="1.5" y1="13" x2="4" y2="13"/><line x1="22" y1="13" x2="24.5" y2="13"/></g></svg>',
+    "quarter_progress": '<svg class="glyph" viewBox="0 0 26 26"><g fill="#000"><rect x="2" y="2" width="6" height="6"/><rect x="10" y="2" width="6" height="6"/><rect x="18" y="2" width="6" height="6"/><rect x="2" y="10" width="6" height="6"/><rect x="10" y="10" width="6" height="6"/></g><g fill="none" stroke="#000" stroke-width="2"><rect x="19" y="11" width="4" height="4"/><rect x="3" y="19" width="4" height="4"/><rect x="11" y="19" width="4" height="4"/><rect x="19" y="19" width="4" height="4"/></g></svg>',
     "markets": '<svg class="glyph" viewBox="0 0 26 26"><polyline points="2,20 9,12 14,16 24,5" fill="none" stroke="#000" stroke-width="3" stroke-linejoin="round" stroke-linecap="round"/></svg>',
 }
 

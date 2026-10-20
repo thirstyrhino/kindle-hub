@@ -48,6 +48,7 @@ def main() -> int:
     plugins = load_plugins(args.only)
     for p in plugins:  # in `order`, so later plugins can read earlier ones from ctx.data
         try:
+            ctx.settings = p.settings  # this plugin's `settings:` from its plugin.yaml
             ctx.data[p.name] = p.module.fetch(ctx) or {}
         except Exception as e:
             ctx.log(f"{p.name}: fetch failed: {e}")
