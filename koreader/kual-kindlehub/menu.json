@@ -1,0 +1,5 @@
+{
+  "items": [
+    {"name": "Kindle Hub", "priority": -100, "action": "/mnt/us/extensions/kindlehub/bin/launch.sh", "status": false}
+  ]
+}

@@ -138,12 +138,33 @@ Each run's page on GitHub starts with a short summary of what happened:
 4. **Tools → TRMNL Display → Start dashboard.**
 
 Tap the screen to leave the dashboard and go back to reading. Start it again from the same menu.
-
-**Pick a screen yourself.** Copy [`koreader/kindlehub.koplugin`](koreader/kindlehub.koplugin) into
-`koreader/plugins/` too. **Tools → Kindle Hub** lists every screen from the latest run; tap one
-to show it, swipe left or right for the next or previous screen, and tap to close. It uses the
-TRMNL plugin's Base URL, and the hourly dashboard keeps its own schedule.
 Keep the Kindle on a charger while it's a dashboard. It checks for a new screen every hour.
+
+### 4. Kindle: Kindle Hub, one tap away
+
+The Kindle Hub plugin opens the screen that's on now as soon as KOReader starts, so you don't
+dig through menus.
+
+1. Over USB, copy [`koreader/kindlehub.koplugin`](koreader/kindlehub.koplugin) into
+   `koreader/plugins/`.
+2. Copy [`koreader/kual-kindlehub`](koreader/kual-kindlehub) to `extensions/` on the Kindle and
+   rename it `kindlehub` (so it's `extensions/kindlehub/`). KUAL now has a **Kindle Hub** button.
+3. Restart KOReader.
+
+Now **Kindle home → KUAL → Kindle Hub** opens straight onto the current screen. Swipe left or
+right for the other screens, tap to close and you're in KOReader as usual.
+
+- **Tools → Kindle Hub → Open when KOReader starts:** **Always** (default: any way you start
+  KOReader), **Only from the Kindle Hub button** (KOReader's own button opens your books as
+  normal), or **Never**.
+- **From anywhere in KOReader, one tap:** **Settings → Taps and gestures → Gesture manager →**
+  pick a corner tap → **General → Kindle Hub: Show current screen**.
+- **Tools → Kindle Hub → Pick a screen** lists every screen from the latest run.
+- **Works offline.** It keeps the last copy of every screen and shows it at once, then swaps in
+  the fresh one when Wi-Fi connects.
+
+It uses the TRMNL plugin's Base URL, and the hourly dashboard keeps its own schedule.
+
 
 ---
 
