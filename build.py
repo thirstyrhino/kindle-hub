@@ -9,6 +9,7 @@
 from __future__ import annotations
 
 import argparse
+import os
 import shutil
 import sys
 from datetime import datetime, time
@@ -71,7 +72,27 @@ def main() -> int:
     else:
         ctx.log("nothing rendered; the Kindle keeps its last screen")
     write_index(ctx, plugins, rendered, on_air, site_dir)
+    write_run_summary(ctx, plugins, rendered, on_air)
     return 0 if rendered else 1
+
+
+def write_run_summary(ctx, plugins, rendered, on_air) -> None:
+    """On GitHub Actions, show what this run did at the top of the run page (no log digging)."""
+    path = os.environ.get("GITHUB_STEP_SUMMARY")
+    if not path:
+        return
+    rows = ["| Screen | Result |", "|---|---|"]
+    for p in plugins:
+        d = ctx.data.get(p.name, {})
+        if p.name not in rendered:
+            result = f"skipped: {d.get('error', 'no data')}"[:160]
+        elif p.name == "morning_brief":
+            result = f"AI brief by `{d['model']}`" if d.get("ai") else "headlines only (AI unavailable or no key)"
+        else:
+            result = "rendered"
+        rows.append(f"| {p.title}{' (on air)' if on_air and p.name == on_air.name else ''} | {result} |")
+    with open(path, "a", encoding="utf-8") as f:
+        f.write(f"### Kindle Hub · {ctx.mode} run · {ctx.now:%d %b %H:%M} IST\n\n" + "\n".join(rows) + "\n")
 
 
 if __name__ == "__main__":
