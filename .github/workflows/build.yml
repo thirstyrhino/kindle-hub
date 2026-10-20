@@ -3,7 +3,7 @@ name: Build Kindle site
 on:
   schedule:
     - cron: "17 0 * * *"     # 05:47 IST: write today's AI brief
-    - cron: "7 1-18 * * *"   # 06:37–23:37 IST hourly: refresh weather/markets, rotate screens
+    - cron: "7,37 * * * *"   # every 30 min round the clock (IST :37 and :07): weather, markets, screens
   push:
     branches: [main]
   workflow_dispatch:

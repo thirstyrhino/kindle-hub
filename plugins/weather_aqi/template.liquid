@@ -1,58 +1,70 @@
 <style>
-  .wx .clock { display: block; min-width: 4.7em; text-align: right; line-height: 1; white-space: nowrap; }
+  .wx { justify-content: space-between; padding-bottom: 4px; }
+  .wx .top { flex: 1; display: flex; align-items: flex-end; justify-content: space-between; }
+  /* The Kindle Hub plugin redraws this box every minute, in Inter Display Bold (data-live). */
+  .wx .clock { display: block; font: 700 40px/1 "Inter Display", Inter, sans-serif; letter-spacing: -.02em;
+    min-width: 4.8em; text-align: right; white-space: nowrap; padding-bottom: 6px; }
+  .wx .hero { display: flex; align-items: center; gap: 18px; padding-top: 4px; }
+  .wx .temp { font: 300 150px/.84 "Inter Display", Inter, sans-serif; letter-spacing: -.05em; }
+  .wx .side { display: flex; flex-direction: column; gap: 4px; min-width: 0; }
+  .wx .cond { font: 700 26px/1.15 Inter, sans-serif; }
+  .wx .sub { font: 500 17px/1.35 Inter, sans-serif; color: #222; }
+  .wx .k { font: 700 13px/1.2 Inter, sans-serif; letter-spacing: .09em; text-transform: uppercase; color: #333; }
+  .wx .tile { background: #e6e6e6; border-radius: 10px; }
+  .wx .aqi { padding: 10px 14px; display: flex; align-items: center; gap: 14px; }
+  .wx .aqi .n { font: 700 30px/1 "Inter Display", Inter, sans-serif; }
+  .wx .aqi .l { font: 600 17px Inter, sans-serif; white-space: nowrap; }
+  .wx .scale { position: relative; height: 24px; flex: 1; }
+  .wx .scale .bar { display: flex; height: 12px; border: 2px solid #000; border-radius: 3px; overflow: hidden; }
+  .wx .scale .mark { position: absolute; top: 12px; border-left: 8px solid transparent; border-right: 8px solid transparent;
+    border-bottom: 12px solid #000; }
+  .wx .days { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+  .wx .day { padding: 12px; display: flex; align-items: center; gap: 10px; }
+  .wx .day .hl { font: 700 26px/1.1 "Inter Display", Inter, sans-serif; }
+  .wx .day .hl span { color: #555; font-weight: 600; }
 </style>
-<div class="layout wx" style="justify-content:space-between">
-  <div class="flex col gap-s">
-    <div class="flex between">
-      <div class="flex col gap-s">
-        <span class="label">{{ location }} · now</span>
-        <span class="value value--xxlarge">{{ now.temp }}°</span>
-      </div>
-      <div class="flex col" style="align-items:flex-end;gap:4px">
-        <span class="value value--large clock" data-live="clock" data-format="{{ meta.clock_format }}">{{ meta.time }}</span>
-        {{ now.icon_svg }}
-      </div>
+<div class="layout layout--clean wx">
+  <div class="stripe"><div class="top">
+    <span class="heading">{{ location }}</span>
+    <span class="clock" data-live="clock" data-format="{{ meta.clock_format }}">{{ meta.time }}</span>
+  </div></div>
+
+  <div class="hero">
+    <span class="temp">{{ now.temp }}°</span>
+    <div class="side">
+      {{ now.icon_svg }}
+      <span class="cond">{{ now.label }}</span>
+      <span class="sub">Feels {{ now.feels }}° · ↑{{ today.high }}° ↓{{ today.low }}°<br>Humidity {{ now.humidity }}% · Wind {{ now.wind }} km/h</span>
     </div>
-    <span class="title">{{ now.label }}</span>
-    <span class="description">Feels {{ now.feels }}° · Humidity {{ now.humidity }}% · Wind {{ now.wind }} km/h</span>
   </div>
 
-  <div class="divider"></div>
+  {% if chart_svg != "" %}
+  <div>
+    <div class="k" style="margin:2px 0 6px">Next 24 hours · rain chance</div>
+    {{ chart_svg }}
+  </div>
+  {% endif %}
 
-  <div class="flex col gap-m">
-    <span class="label">Air quality · US AQI</span>
-    <div class="flex end gap-m">
-      <span class="value value--large">{% if aqi.value %}{{ aqi.value }}{% else %}–{% endif %}</span>
-      <span class="title title--small" style="padding-bottom:4px">{{ aqi.label }}</span>
+  <div class="tile aqi">
+    <span class="k">Air</span>
+    <span class="n">{% if aqi.value %}{{ aqi.value }}{% else %}–{% endif %}</span>
+    <span class="l">{{ aqi.label }}</span>
+    <div class="scale">
+      <div class="bar"><div style="width:16.7%;background:#fff"></div><div style="width:16.7%;background:#ccc"></div>
+        <div style="width:16.6%;background:#999"></div><div style="width:16.7%;background:#666"></div>
+        <div style="width:33.3%;background:#222"></div></div>
+      {% if aqi.value %}<div class="mark" style="left:calc({{ aqi.pct }}% - 8px)"></div>{% endif %}
     </div>
-    <div style="position:relative;height:30px">
-      <div class="flex" style="height:14px;border:2px solid #000">
-        <div style="width:16.7%;background:#eee"></div><div style="width:16.7%;background:#bbb"></div>
-        <div style="width:16.6%;background:#888"></div><div style="width:16.7%;background:#555"></div>
-        <div style="width:33.3%;background:#222"></div>
-      </div>
-      <div style="position:absolute;top:14px;left:calc({{ aqi.pct }}% - 9px);width:0;height:0;
-        border-left:9px solid transparent;border-right:9px solid transparent;border-bottom:14px solid #000"></div>
-    </div>
-    <span class="description">{{ aqi.advice }}{% if aqi.pm25 %} PM2.5 {{ aqi.pm25 }} · PM10 {{ aqi.pm10 }} µg/m³{% endif %}</span>
   </div>
 
-  <div class="divider"></div>
-
-  <div class="flex between">
-    {% for d in forecast %}
-    <div class="flex col center-y gap-s" style="width:25%">
-      <span class="label">{{ d.name }}</span>
-      {{ d.icon_svg }}
-      <span class="value value--small">{{ d.high }}°<span style="font-weight:600;color:#444">/{{ d.low }}°</span></span>
-      <span class="description">Rain {{ d.rain }}%</span>
-    </div>
+  <div class="days">
+    {% for d in forecast offset:1 limit:3 %}
+    <div class="tile day">{{ d.icon_svg }}<div><div class="k">{{ d.name }}</div>
+      <div class="hl">{{ d.high }}°<span>/{{ d.low }}°</span></div></div></div>
     {% endfor %}
   </div>
-
-  <span class="description">Sunrise {{ sunrise }} · Sunset {{ sunset }}</span>
 </div>
-<div class="title_bar">
+<div class="title_bar title_bar--pill">
   {{ meta.glyph }}<span class="title">{{ meta.title }}</span>
-  <span class="instance">{{ meta.date_short }} · updated {{ meta.updated }}</span>
+  <span class="instance">Sunrise {{ sunrise }} · Sunset {{ sunset }}</span>
 </div>

@@ -1,10 +1,12 @@
 """AI morning brief: headlines from your feeds + weather + markets, written up by an OpenRouter model.
 
-Written by the model at 05:47 ("full" mode), then again on the hourly refreshes whenever the last
-brief is `refresh_hours` old (plugin.yaml, default 3). Other refreshes reuse it from the live site.
+Written by the model at 05:47 ("full" mode), then again on the refresh runs (every 30 minutes)
+whenever the last brief is `refresh_hours` old (plugin.yaml, default 3). Other refreshes reuse it
+from the live site, and so does every refresh before `quiet_until` (default 06:00), so the night
+doesn't produce briefs and the day's first one is the 05:47 morning edition.
 If the model is unavailable, a plain brief is built from the headlines so the Kindle never goes blank.
 """
-from datetime import date, datetime
+from datetime import date, datetime, time
 from email.utils import format_datetime
 from pathlib import Path
 
@@ -131,6 +133,10 @@ def _age_minutes(ctx, prev: dict) -> float | None:
 def fetch(ctx):
     if ctx.mode == "refresh":
         prev = ctx.previous_json("data/morning_brief.json")
+        quiet_until = time.fromisoformat(str(ctx.settings.get("quiet_until", "06:00")))
+        if prev and ctx.now.time() < quiet_until:
+            ctx.log(f"morning_brief: before {quiet_until:%H:%M}, keeping the brief from {prev.get('date')} {prev.get('generated_at')}")
+            return prev
         hours = float(ctx.settings.get("refresh_hours", 3) or 0)
         age = _age_minutes(ctx, prev) if prev and prev.get("date") == ctx.today else None
         if age is not None and (hours <= 0 or age < hours * 60 - SLACK_MINUTES):

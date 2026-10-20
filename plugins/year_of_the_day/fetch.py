@@ -1,19 +1,21 @@
 """Year of the Day: one year in history picked from Wikipedia's "On this day" events for today's date.
 
 Equivalent of TRMNL's "Year of the Day" recipe. Data: Wikimedia's free feed API, no key.
-The pick is seeded by the date, so every refresh that day shows the same year.
+Three editions a day (plugin.yaml `editions`, default 00:00, 12:00, 18:00): each picks a different
+year, seeded by the date, so every refresh within an edition shows the same one.
 
 Modes (plugin.yaml `settings.mode`):
   text       year, what happened, background, other years
   comic      an AI comic-panel illustration of the event, with the year and headline
   newspaper  the same, drawn as a vintage newspaper halftone illustration
-Image modes use Cloudflare Workers AI (free daily allowance). The image is made once a day
-and reused by the hourly refreshes. Without Cloudflare keys, or if generation fails, the
+Image modes use Cloudflare Workers AI (free daily allowance). The image is made once per edition
+and reused by the refreshes in between. Without Cloudflare keys, or if generation fails, the
 screen falls back to text mode.
 """
 import random
 import re
 import shutil
+from datetime import time
 from pathlib import Path
 
 from core import fmt, imagegen, llm
@@ -84,14 +86,15 @@ def _scene(ctx, main: dict, mode: str) -> str:
 def _illustrate(ctx, main: dict, mode: str) -> Path | None:
     out = ROOT / "build" / "img" / "year_of_the_day.png"
     out.parent.mkdir(parents=True, exist_ok=True)
-    # Reuse today's picture from the live site (made by the morning run).
+    # Reuse this edition's picture from the live site (made by the edition's first run).
     prev = ctx.previous_json("data/year_of_the_day.json") or {}
+    pm = prev.get("main") or {}
     if (prev.get("date") == ctx.today and prev.get("mode") == mode and prev.get("image")
-            and (prev.get("main") or {}).get("year") == main["year"]):
+            and pm.get("year") == main["year"] and pm.get("text") == main["text"]):
         raw = ctx.previous(SITE_IMAGE)
         if raw:
             out.write_bytes(raw)
-            ctx.log("year_of_the_day: reusing today's illustration")
+            ctx.log("year_of_the_day: reusing this edition's illustration")
             return out
     prompt = f"{STYLES[mode]} Scene: {_scene(ctx, main, mode)} {RULES}"
     raw = imagegen.generate(ctx, prompt, model=ctx.settings.get("image_model") or imagegen.DEFAULT_MODEL)
@@ -106,6 +109,16 @@ def _illustrate(ctx, main: dict, mode: str) -> Path | None:
     return out
 
 
+def _edition(ctx) -> tuple[int, str]:
+    """Which of today's editions is current: its number (0 = first) and a name for the screen."""
+    starts = sorted(time.fromisoformat(str(t)) for t in (ctx.settings.get("editions") or ["00:00"]))
+    now = ctx.now.time()
+    n = max([i for i, t in enumerate(starts) if now >= t] or [0])
+    hour = starts[n].hour if len(starts) > 1 else now.hour
+    name = "Morning" if hour < 12 else "Afternoon" if hour < 17 else "Evening"
+    return n, name
+
+
 def fetch(ctx):
     mode = str(ctx.settings.get("mode", "text")).lower()
     if mode not in ("text", *STYLES):
@@ -113,13 +126,22 @@ def fetch(ctx):
     events = [e for e in (_clean(x) for x in _load(ctx).get("events", [])) if e and e["year"] <= ctx.now.year]
     if not events:
         return {"available": False, "error": "no events for today"}
-    rng = random.Random(ctx.today)                  # same pick for the whole day
+    rng = random.Random(ctx.today)                  # the day's order; each edition takes the next year
     pool = [e for e in events if e["extract"]] or events
     if mode != "text":
         pool = [e for e in pool if not GRIM.search(e["text"])] or pool
     prefer = [w.lower() for w in ctx.settings.get("prefer") or []]
     preferred = [e for e in pool if any(w in (e["text"] + " " + e["extract"]).lower() for w in prefer)]
-    main = rng.choice(preferred or pool)
+    rest_pool = [e for e in pool if e not in preferred]
+    rng.shuffle(preferred)
+    rng.shuffle(rest_pool)
+    order, years = [], set()
+    for e in preferred + rest_pool:                 # preferred first, one event per year
+        if e["year"] not in years:
+            order.append(e)
+            years.add(e["year"])
+    edition, edition_name = _edition(ctx)
+    main = order[edition % len(order)]
 
     rest = [e for e in events if e["year"] != main["year"]]
     rng.shuffle(rest)
@@ -135,6 +157,7 @@ def fetch(ctx):
     return {
         "available": True,
         "date": ctx.today,
+        "edition": edition_name,
         "mode": mode if image else "text",
         "date_long": ctx.now.strftime("%-d %B"),
         "main": {**main, "ago": ctx.now.year - main["year"] - (1 if main["year"] < 0 else 0)},  # no year 0

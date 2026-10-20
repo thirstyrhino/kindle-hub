@@ -24,7 +24,7 @@ SCREENS = [("morning_brief", "Morning brief", "05:30–10:00"),
            ("weather_aqi", "Weather & air", "10:00–13:00 · evenings"),
            ("markets", "Markets", "09:15–15:30 · weekdays"),
            ("quarter_progress", "Quarter progress", "evenings"),
-           ("year_of_the_day", "Year of the day", "11:00 · overnight")]
+           ("year_of_the_day", "Year of the day", "three a day")]
 HERO = ["morning_brief", "weather_aqi", "quarter_progress", "year_of_the_day"]  # 4 fit the README width
 
 

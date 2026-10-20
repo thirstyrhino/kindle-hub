@@ -20,9 +20,9 @@ nothing to host, nothing to keep switched on at home.
 - **A dashboard that changes through the day.** Leave the Kindle on a stand and it shows the
   brief in the morning, weather and air quality (with the time) at midday, markets while NSE
   is trading, the forecast and quarter progress in the evening, and a year from history
-  overnight. It updates every hour.
+  overnight. It updates every 30 minutes, day and night.
 - **₹0 to run.** GitHub Actions builds everything on a schedule and GitHub Pages hosts it. The
-  AI uses OpenRouter's free models (about 8 calls a day). Weather and air quality come from
+  AI uses OpenRouter's free models (about 10 calls a day). Weather and air quality come from
   Open-Meteo, which needs no key.
 - **Screens you can add yourself.** Each screen is a small folder with a data script and a
   template. Copy one, change it, push, and it joins the rotation.
@@ -36,7 +36,7 @@ nothing to host, nothing to keep switched on at home.
 </tr>
 <tr>
 <td valign="top">AI headline, three takeaways, the top stories that fit on screen, a weather strip and one focus for the day.</td>
-<td valign="top">The time, temperature now, US AQI on a scale with PM2.5 and PM10, a 4-day forecast and sunrise/sunset for Bengaluru. On the Kindle Hub plugin the time is redrawn every minute.</td>
+<td valign="top">The time and conditions now, the next 24 hours as a temperature line with rain-chance bars (every 3 hours, with a moon at night), air quality on the US AQI scale and the next 3 days, for Bengaluru. Refreshed every 30 minutes; on the Kindle Hub plugin the time is redrawn every minute.</td>
 </tr>
 <tr>
 <td align="center"><img src="docs/images/screen-markets.png" width="300" alt="Markets screen"><br><b>Markets</b><br><sub>09:15–15:30, Mon–Fri (trading hours only)</sub></td>
@@ -47,11 +47,11 @@ nothing to host, nothing to keep switched on at home.
 <td valign="top">One square per day of the quarter (passed, today, still to come), with days passed and days left. Same clean look as TRMNL's <a href="https://trmnl.com/recipes/quarter-progress-212805">Quarter Progress</a> recipe, set out for a portrait screen. Switch to April–March financial-year quarters in its <code>plugin.yaml</code>.</td>
 </tr>
 <tr>
-<td align="center"><img src="docs/images/screen-year_of_the_day.png" width="300" alt="Year of the day screen"><br><b>Year of the day</b><br><sub>11:00–12:00 and 23:00 (stays up overnight)</sub></td>
+<td align="center"><img src="docs/images/screen-year_of_the_day.png" width="300" alt="Year of the day screen"><br><b>Year of the day</b><br><sub>three a day: on screen at 11:00, 17:00 and 23:00</sub></td>
 <td align="center"><img src="docs/images/screen-countdown-example.png" width="300" alt="Example custom countdown screen"><br><b>Your own screen</b><br><sub>a countdown, in three small files</sub></td>
 </tr>
 <tr>
-<td valign="top">A year in history from Wikipedia's "On this day" events for today's date, drawn as an <b>AI comic panel</b> (or a vintage-newspaper illustration) with the headline, like TRMNL's <a href="https://trmnl.com/recipes/year-of-the-day-148248">Year of the Day</a> recipe. The picture is made once a day for free on Cloudflare. Without Cloudflare keys it shows the <a href="docs/images/screen-year_of_the_day-text.png">text version</a> instead. <sub>The picture above is a hand-drawn stand-in for the demo.</sub></td>
+<td valign="top">A year in history from Wikipedia's "On this day" events for today's date, drawn as an <b>AI comic panel</b> (or a vintage-newspaper illustration) with the headline, like TRMNL's <a href="https://trmnl.com/recipes/year-of-the-day-148248">Year of the Day</a> recipe. A new year comes in the morning, at noon and at 18:00, each with its own picture, made for free on Cloudflare. Without Cloudflare keys it shows the <a href="docs/images/screen-year_of_the_day-text.png">text version</a> instead. <sub>The picture above is a hand-drawn stand-in for the demo.</sub></td>
 <td valign="top">Every screen is a folder you can copy. See <a href="#build-your-own-screen">Build your own screen</a>.</td>
 </tr>
 </table>
@@ -63,7 +63,7 @@ couldn't be fetched is skipped, so the Kindle never shows an empty page.
 
 ```mermaid
 flowchart LR
-    A["GitHub Actions<br/>05:47 IST + hourly"] -->|news, weather, markets| B["Build<br/>build.py"]
+    A["GitHub Actions<br/>05:47 IST + every 30 min"] -->|news, weather, markets| B["Build<br/>build.py"]
     B -->|a brief every 3 hours| C["OpenRouter<br/>free model"]
     B -->|publish| D["GitHub Pages<br/>thirstyrhino.github.io/kindle-hub"]
     D -->|brief.xml| E["KOReader<br/>News Downloader"]
@@ -73,10 +73,10 @@ flowchart LR
 | When (IST) | What happens |
 |---|---|
 | **05:47** | Fetches feeds, weather and markets; the AI writes today's brief; screens are rendered and published. |
-| **Hourly, 06:37–23:37** | Refreshes weather and markets and picks the screen for that hour. Reuses the brief until it's 3 hours old, then the AI writes a fresh one (08:37, 11:37, 14:37…). |
+| **Every 30 minutes, round the clock** (:07 and :37) | Refreshes weather and markets and picks the screen for that hour. Reuses the brief until it's 3 hours old, then the AI writes a fresh one (08:37, 11:37, 14:37…); overnight, before 06:00, it keeps the last one. Year of the Day picks a new year at noon and 18:00. |
 
-GitHub sometimes starts scheduled runs 10–30 minutes late. That's fine for a dashboard that
-updates hourly.
+GitHub sometimes starts scheduled runs 10–30 minutes late. The screens are still never more
+than about an hour old.
 
 The site publishes four things:
 
@@ -139,7 +139,7 @@ Each run's page on GitHub starts with a short summary of what happened:
 4. **Tools → TRMNL Display → Start dashboard.**
 
 Tap the screen to leave the dashboard and go back to reading. Start it again from the same menu.
-Keep the Kindle on a charger while it's a dashboard. It checks for a new screen every hour.
+Keep the Kindle on a charger while it's a dashboard. It checks for a new screen every 30 minutes.
 
 ### 4. Kindle: Kindle Hub, one tap away
 
@@ -170,7 +170,7 @@ right for the other screens, tap to close and you're in KOReader as usual.
 - **Stays fresh while open.** It checks the site every 15 minutes. The weather screen's clock is
   redrawn every minute (just the clock, no full-screen flash).
 
-It uses the TRMNL plugin's Base URL, and the hourly dashboard keeps its own schedule.
+It uses the TRMNL plugin's Base URL, and the TRMNL dashboard keeps its own schedule.
 
 ### 5. Kindle: Kindle Hub as Bookshelf's dashboard
 
@@ -187,7 +187,7 @@ reading stats, reading goal).
 
 - **Swipe** left or right for the other screens. **Tap** to go back to your books.
 - **Stays up to date while it's open.** It checks the site every 15 minutes (the site rebuilds
-  hourly) and swaps in a newer picture. With **What's on now** it moves with the schedule; with
+  every 30 minutes) and swaps in a newer picture. With **What's on now** it moves with the schedule; with
   **Take turns** it changes screen every 15 minutes. When the Kindle wakes up, it catches up
   within seconds.
 - **Offline**, it shows the last saved copy. If there's nothing saved yet and no Wi-Fi,
@@ -254,12 +254,12 @@ Everything you're likely to change is in [`config.yaml`](config.yaml):
   Add `days: [mon, tue, wed, thu, fri]` to limit a screen to some days, and
   `only_in_window: true` to keep it off the Kindle outside its times (markets does both).
 - **How often the brief is rewritten:** `refresh_hours` in `plugins/morning_brief/plugin.yaml`
-  (default 3; 0 for once a day).
+  (default 3; 0 for once a day). Before `quiet_until` (06:00) it's never rewritten.
 - **Clock style:** `clock: "12h"` (7:05 PM) or `"24h"` (19:05) in `config.yaml`.
 - **Year of the Day style:** in `plugins/year_of_the_day/plugin.yaml`, set `mode:` to `comic`
   (default), `newspaper` or `text`. Add words to `prefer:` (e.g. `["India"]`) to favour those events.
   Picture modes skip events built around a death or an attack, and never put real people's faces
-  front and centre.
+  front and centre. `editions:` sets when a new year comes (default `["00:00", "12:00", "18:00"]`).
 - **Financial-year quarters:** in `plugins/quarter_progress/plugin.yaml`, set
   `fiscal_year_start: 4`. October–December then shows as **Q3 FY27**.
 - **When the builds run:** `.github/workflows/build.yml`. Cron times are UTC (IST = UTC + 5:30).
@@ -356,8 +356,8 @@ Open `site/index.html` to see the result. After changing a template, run
 - **Market data** comes from Yahoo Finance's unofficial chart API. If Yahoo blocks it, the
   markets screen drops out until it's switched to another source.
 - **Free AI models come and go.** `auto-free` picks from OpenRouter's current free list on each
-  run and tries up to three. On the free tier you get 50 requests a day; this uses about 8
-  (7 briefs and the Year of the Day picture prompt).
+  run and tries up to three. On the free tier you get 50 requests a day; this uses about 10
+  (7 briefs and 3 Year of the Day picture prompts).
 - **The brief ebook is the morning edition.** KOReader's News Downloader doesn't download a
   day's brief again once it has it. The 3-hourly rewrites show up on the dashboard and on the
   web page (`/briefs/<date>.html`).

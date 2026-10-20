@@ -62,8 +62,12 @@ WMO = {
 }
 
 
-def weather(code: int | None) -> tuple[str, str]:
-    return WMO.get(int(code) if code is not None else -1, ("—", "cloud"))
+def weather(code: int | None, is_day: bool = True) -> tuple[str, str]:
+    """(label, icon key) for a WMO code; at night a clear sky gets the moon instead of the sun."""
+    label, icon = WMO.get(int(code) if code is not None else -1, ("—", "cloud"))
+    if not is_day:
+        icon = {"sun": "moon", "partly": "partly_night"}.get(icon, icon)
+    return label, icon
 
 
 def icon_svg(key: str, size: int = 64) -> str:
@@ -80,6 +84,10 @@ def icon_svg(key: str, size: int = 64) -> str:
                             for c, d in [(-1, 0), (0, -1), (-.707, -.707), (.707, -.707)])
                   + '<path d="M30 80h40a14 14 0 0 0 0-28 19 19 0 0 0-36 5 11 11 0 0 0-4 23z" '
                   + s.replace('fill="none"', 'fill="#fff"') + "/>",
+        "moon": f'<path d="M58 20a31 31 0 1 0 24 48 25 25 0 0 1-24-48z" {s}/>',
+        "partly_night": f'<path d="M40 16a20 20 0 1 0 18 30 16 16 0 0 1-18-30z" {s}/>'
+                        + '<path d="M30 80h40a14 14 0 0 0 0-28 19 19 0 0 0-36 5 11 11 0 0 0-4 23z" '
+                        + s.replace('fill="none"', 'fill="#fff"') + "/>",
         "cloud": cloud,
         "fog": cloud.replace("M22 70", "M22 58").replace("0-32", "0-30")
                + f'<line x1="18" y1="78" x2="82" y2="78" {s}/><line x1="26" y1="90" x2="74" y2="90" {s}/>',
@@ -107,3 +115,44 @@ def sparkline(values: list[float], width: int = 150, height: int = 40, stroke: i
             f'<polyline points="{pts}" fill="none" stroke="#000" stroke-width="{stroke}" '
             f'stroke-linejoin="round" stroke-linecap="round"/>'
             f'<circle cx="{last_x}" cy="{last_y}" r="{stroke + 2}" fill="#000"/></svg>')
+
+
+def hourly_chart(points: list[dict], width: int = 576, height: int = 246) -> str:
+    """The weather screen's outlook: an icon per column, a temperature line with values, and
+    rain-chance bars standing on a baseline with the time under each. points: dicts with
+    label, temp, rain (0-100) and icon (an icon_svg key)."""
+    if not points:
+        return ""
+    col = width / len(points)
+    temps = [p["temp"] for p in points]
+    lo, hi = min(temps), max(temps)
+    top, bottom, base = 76, 150, height - 32       # temperature band; rain bars stand on `base`
+
+    def y(t):
+        return bottom - (t - lo) / max(1, hi - lo) * (bottom - top)
+
+    out = [f'<svg width="{width}" height="{height}" viewBox="0 0 {width} {height}" '
+           f'xmlns="http://www.w3.org/2000/svg" font-family="Inter, sans-serif">']
+    xy = []
+    for i, p in enumerate(points):
+        cx = col * i + col / 2
+        xy.append((cx, y(p["temp"])))
+        out.append(f'<g transform="translate({cx - 17:.1f},0)">{icon_svg(p["icon"], 34)}</g>')
+        rain = max(0, min(100, int(p.get("rain") or 0)))
+        bar = rain / 100 * 46
+        if bar:
+            out.append(f'<rect x="{cx - 18:.1f}" y="{base - bar:.1f}" width="36" height="{bar:.1f}" fill="#999"/>')
+        if rain >= 20:
+            out.append(f'<text x="{cx:.1f}" y="{base - bar - 5:.1f}" font-size="14" font-weight="600" '
+                       f'text-anchor="middle" fill="#333">{rain}%</text>')
+        out.append(f'<text x="{cx:.1f}" y="{base + 24}" font-size="16" font-weight="600" '
+                   f'text-anchor="middle">{html.escape(p["label"])}</text>')
+    out.append(f'<line x1="0" y1="{base + 1}" x2="{width}" y2="{base + 1}" stroke="#000" stroke-width="2"/>')
+    out.append('<polyline points="' + " ".join(f"{x:.1f},{yy:.1f}" for x, yy in xy)
+               + '" fill="none" stroke="#000" stroke-width="4" stroke-linejoin="round" stroke-linecap="round"/>')
+    for (x, yy), p in zip(xy, points):
+        out.append(f'<circle cx="{x:.1f}" cy="{yy:.1f}" r="5" fill="#000"/>')
+        out.append(f'<text x="{x:.1f}" y="{yy - 12:.1f}" font-size="21" font-weight="700" '
+                   f'text-anchor="middle">{p["temp"]}°</text>')
+    out.append("</svg>")
+    return "".join(out)

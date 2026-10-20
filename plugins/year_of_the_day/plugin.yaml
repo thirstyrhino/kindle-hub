@@ -1,10 +1,13 @@
 name: year_of_the_day
 title: Year of the Day
 order: 45
-show:                    # 11:xx and 23:xx (alternating with weather); the 23:37 screen stays up overnight
+show:                    # 11:xx (morning edition), 17:xx (afternoon) and 23:xx (evening), sharing with weather
   - "11:00-12:00"
+  - "17:00-17:59"
   - "23:00-23:59"
 settings:
+  # A new year (and picture) from each of these times: morning, afternoon and evening editions.
+  editions: ["00:00", "12:00", "18:00"]
   # text      = year, what happened, background, other years
   # comic     = AI comic-panel illustration of the event (needs the Cloudflare secrets; else falls back to text)
   # newspaper = AI vintage-newspaper halftone illustration (same)

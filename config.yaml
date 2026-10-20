@@ -48,7 +48,7 @@ screen:
   width: 600
   height: 800
   # Seconds between dashboard fetches by the TRMNL KOReader plugin.
-  refresh_seconds: 3600
+  refresh_seconds: 1800
 
 # How many past briefs to keep in the RSS feed.
 feed_history: 7
