@@ -1,0 +1,45 @@
+<div class="layout" style="gap:13px">
+  <div class="flex between center-y">
+    <span class="label">{{ meta.date_long }}</span>
+    {% unless ai %}<span class="label label--inverted">Headlines only</span>{% endunless %}
+  </div>
+
+  <span class="title title--large clamp-3">{{ headline }}</span>
+
+  <ul class="bullets" style="gap:6px">
+    {% for b in summary limit: 3 %}<li class="clamp-3" style="font-size:17.5px">{{ b }}</li>{% endfor %}
+  </ul>
+
+  <div class="divider"></div>
+
+  <span class="label">Top stories</span>
+  <!-- data-fit: the renderer drops trailing stories that don't fit, so nothing is cut mid-line -->
+  <div class="flex col grow" style="overflow:hidden;margin-top:-4px;gap:9px" data-fit>
+    {% for s in stories limit: 5 %}
+    <div class="item" data-fit-item>
+      <div class="meta"></div>
+      <div class="content">
+        <span class="title title--small clamp-2" style="font-size:19px">{{ s.title }}</span>
+        <span class="description clamp-1" style="font-size:15px">{{ s.source }}</span>
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+
+  {% if weather %}
+  <div class="flex center-y gap-m" style="border:3px solid #000;padding:8px 12px">
+    <span class="value value--small">{{ weather.now.temp }}°</span>
+    <span class="description" style="font-size:16px;line-height:1.25">
+      {{ weather.now.label }} · {{ weather.today.low }}–{{ weather.today.high }}° · Rain {{ weather.today.rain }}%<br>
+      AQI {{ weather.aqi.value }} {{ weather.aqi.label }}</span>
+  </div>
+  {% endif %}
+  {% if focus != blank %}
+  <div class="flex gap-m center-y"><span class="label label--inverted">Focus</span>
+    <span class="description clamp-2" style="font-size:16.5px;color:#000">{{ focus }}</span></div>
+  {% endif %}
+</div>
+<div class="title_bar">
+  {{ meta.glyph }}<span class="title">{{ meta.title }}</span>
+  <span class="instance">{% if generated_at %}written {{ generated_at }} · {% endif %}updated {{ meta.updated }}</span>
+</div>

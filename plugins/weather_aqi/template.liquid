@@ -1,0 +1,50 @@
+<div class="layout" style="justify-content:space-between">
+  <div class="flex between">
+    <div class="flex col gap-s">
+      <span class="label">{{ location }} · now</span>
+      <span class="value value--xxlarge">{{ now.temp }}°</span>
+      <span class="title">{{ now.label }}</span>
+      <span class="description">Feels {{ now.feels }}° · Humidity {{ now.humidity }}% · Wind {{ now.wind }} km/h</span>
+    </div>
+    <div style="padding-top:18px">{{ now.icon_svg }}</div>
+  </div>
+
+  <div class="divider"></div>
+
+  <div class="flex col gap-m">
+    <span class="label">Air quality · US AQI</span>
+    <div class="flex end gap-m">
+      <span class="value value--large">{% if aqi.value %}{{ aqi.value }}{% else %}–{% endif %}</span>
+      <span class="title title--small" style="padding-bottom:4px">{{ aqi.label }}</span>
+    </div>
+    <div style="position:relative;height:30px">
+      <div class="flex" style="height:14px;border:2px solid #000">
+        <div style="width:16.7%;background:#eee"></div><div style="width:16.7%;background:#bbb"></div>
+        <div style="width:16.6%;background:#888"></div><div style="width:16.7%;background:#555"></div>
+        <div style="width:33.3%;background:#222"></div>
+      </div>
+      <div style="position:absolute;top:14px;left:calc({{ aqi.pct }}% - 9px);width:0;height:0;
+        border-left:9px solid transparent;border-right:9px solid transparent;border-bottom:14px solid #000"></div>
+    </div>
+    <span class="description">{{ aqi.advice }}{% if aqi.pm25 %} PM2.5 {{ aqi.pm25 }} · PM10 {{ aqi.pm10 }} µg/m³{% endif %}</span>
+  </div>
+
+  <div class="divider"></div>
+
+  <div class="flex between">
+    {% for d in forecast %}
+    <div class="flex col center-y gap-s" style="width:25%">
+      <span class="label">{{ d.name }}</span>
+      {{ d.icon_svg }}
+      <span class="value value--small">{{ d.high }}°<span style="font-weight:600;color:#444">/{{ d.low }}°</span></span>
+      <span class="description">Rain {{ d.rain }}%</span>
+    </div>
+    {% endfor %}
+  </div>
+
+  <span class="description">Sunrise {{ sunrise }} · Sunset {{ sunset }}</span>
+</div>
+<div class="title_bar">
+  {{ meta.glyph }}<span class="title">{{ meta.title }}</span>
+  <span class="instance">{{ meta.date_short }} · updated {{ meta.updated }}</span>
+</div>

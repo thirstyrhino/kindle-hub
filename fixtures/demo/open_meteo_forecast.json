@@ -1,0 +1,58 @@
+{
+ "latitude": 12.97,
+ "longitude": 77.59,
+ "timezone": "Asia/Kolkata",
+ "current": {
+  "time": "2026-10-20T07:00",
+  "interval": 900,
+  "temperature_2m": 22.4,
+  "apparent_temperature": 23.1,
+  "relative_humidity_2m": 83,
+  "weather_code": 2,
+  "wind_speed_10m": 9.4
+ },
+ "daily": {
+  "time": [
+   "2026-10-20",
+   "2026-10-21",
+   "2026-10-22",
+   "2026-10-23"
+  ],
+  "weather_code": [
+   80,
+   3,
+   95,
+   2
+  ],
+  "temperature_2m_max": [
+   28.1,
+   27.4,
+   26.2,
+   28.8
+  ],
+  "temperature_2m_min": [
+   19.6,
+   19.9,
+   19.4,
+   19.1
+  ],
+  "precipitation_probability_max": [
+   58,
+   35,
+   81,
+   20
+  ],
+  "sunrise": [
+   "2026-10-20T06:07",
+   "2026-10-21T06:07",
+   "2026-10-22T06:07",
+   "2026-10-23T06:08"
+  ],
+  "sunset": [
+   "2026-10-20T17:58",
+   "2026-10-21T17:57",
+   "2026-10-22T17:57",
+   "2026-10-23T17:56"
+  ]
+ }
+}

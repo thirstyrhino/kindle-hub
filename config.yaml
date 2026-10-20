@@ -1,0 +1,50 @@
+# Kindle Hub — everything you'd want to change lives here.
+
+# Where the published site lives (no trailing slash). On GitHub it's worked out from the repo name;
+# change this only for a custom domain.
+site_url: "https://thirstyrhino.github.io/kindle-hub"
+
+title: "Morning Brief"
+timezone: "Asia/Kolkata"
+
+location:
+  name: "Bengaluru"
+  latitude: 12.9716
+  longitude: 77.5946
+
+# News feeds the AI picks stories from. Feeds that fail are skipped, not fatal.
+# These are starting points — swap in whatever you actually read.
+feeds:
+  - name: "Economic Times"
+    url: "https://economictimes.indiatimes.com/rssfeedstopstories.cms"
+  - name: "Livemint"
+    url: "https://www.livemint.com/rss/news"
+  - name: "Hacker News"
+    url: "https://hnrss.org/frontpage"
+max_headlines_per_feed: 12
+
+ai:
+  # "auto-free" asks OpenRouter for its current :free models and uses up to 3
+  # of them as fallbacks (free models rotate, so hard-coding one breaks later).
+  # Or list exact model IDs, e.g. ["google/gemini-2.5-flash"] (paid, a few paise a day).
+  models: "auto-free"
+  # Preferred families when auto-picking free models, in order.
+  prefer: ["gemini", "deepseek", "llama", "qwen", "mistral", "nemotron"]
+  # What the brief should care about — edit freely, it goes straight into the prompt.
+  reader_profile: >
+    A product and business leader in Bengaluru working across fintech, payments,
+    D2C commerce and AI. Wants signal over noise: Indian business and markets,
+    payments/fintech regulation, e-commerce, and notable AI/tech developments.
+  stories: 5
+
+# Kindle screen. Render at the exact panel size so nothing gets rescaled.
+# Kindle Basic 2 (8th gen, 2016, serial G000K9/G000KA): 600 x 800  <- this device
+# Paperwhite 3 (7th gen, 2015), Voyage, Oasis 2: 1072 x 1448
+screen:
+  width: 600
+  height: 800
+  # Seconds between dashboard fetches by the TRMNL KOReader plugin.
+  refresh_seconds: 3600
+
+# How many past briefs to keep in the RSS feed.
+feed_history: 7

@@ -1,0 +1,27 @@
+<div class="layout" style="gap:0">
+  <div class="flex between center-y" style="padding-bottom:8px">
+    <span class="label">{{ session }}</span>
+    <span class="label">{{ meta.date_short }}</span>
+  </div>
+  <div class="flex col grow" style="justify-content:space-evenly">
+  {% for r in rows %}
+  <div class="flex col gap-s" style="padding:20px 0;{% unless forloop.last %}border-bottom:3px solid #000;{% endunless %}">
+    <span class="title title--small">{{ r.name }}</span>
+    <div class="flex between end">
+      <span class="value value--large">{{ r.value }}</span>
+      {{ r.spark_svg }}
+    </div>
+    <div class="flex gap-m center-y">
+      <span class="label label--inverted" style="font-size:17px">{% if r.up %}▲{% else %}▼{% endif %} {{ r.pct }}</span>
+      <span class="description">{{ r.change }} on the day</span>
+    </div>
+  </div>
+  {% endfor %}
+  </div>
+  {% if missing.size > 0 %}<span class="description">Unavailable: {{ missing | join: ", " }}</span>{% endif %}
+  <span class="description" style="font-size:14px">One-month trend · Yahoo Finance data, may lag</span>
+</div>
+<div class="title_bar">
+  {{ meta.glyph }}<span class="title">{{ meta.title }}</span>
+  <span class="instance">updated {{ meta.updated }}</span>
+</div>

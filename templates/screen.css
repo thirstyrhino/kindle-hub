@@ -1,0 +1,50 @@
+/* E-ink screen styles. Class names follow TRMNL's framework (layout, title_bar, item, title,
+   value, label, description) so templates move to TRMNL / LaraPaper with light changes. */
+:root { --ink: #000; --ink-2: #222; --ink-3: #444; --paper: #fff; }
+* { box-sizing: border-box; margin: 0; padding: 0; }
+html, body { width: var(--w); height: var(--h); background: var(--paper); color: var(--ink);
+  font-family: "Inter", "DejaVu Sans", sans-serif; -webkit-font-smoothing: antialiased; }
+.screen { width: var(--w); height: var(--h); display: flex; flex-direction: column; overflow: hidden; }
+.view { flex: 1; display: flex; flex-direction: column; min-height: 0; }
+.layout { flex: 1; min-height: 0; display: flex; flex-direction: column; gap: 18px; padding: 26px 28px 18px; }
+
+/* Title bar sits at the bottom, like TRMNL's */
+.title_bar { height: 54px; flex: none; display: flex; align-items: center; gap: 10px; padding: 0 22px;
+  border-top: 4px solid var(--ink); }
+.title_bar .glyph { width: 26px; height: 26px; flex: none; }
+.title_bar .title { font-size: 17px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; }
+.title_bar .instance { margin-left: auto; font-size: 16px; font-weight: 500; color: var(--ink-2); }
+
+/* Elements */
+.label { display: block; font-size: 15px; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; color: var(--ink-2); }
+.label--inverted { display: inline-block; background: var(--ink); color: var(--paper); padding: 3px 8px; }
+.title { display: block; font-size: 26px; font-weight: 700; line-height: 1.18; letter-spacing: -.01em; }
+.title--large { font-size: 32px; line-height: 1.12; letter-spacing: -.02em; }
+.title--small { font-size: 20px; font-weight: 600; line-height: 1.22; }
+.description { display: block; font-size: 17px; font-weight: 500; line-height: 1.35; color: var(--ink-2); }
+.value { display: block; font-family: "Inter Display", "Inter", sans-serif; font-weight: 700; line-height: .95;
+  letter-spacing: -.03em; font-variant-numeric: tabular-nums; }
+.value--xxlarge { font-size: 132px; }
+.value--xlarge { font-size: 84px; }
+.value--large { font-size: 52px; }
+.value--medium { font-size: 36px; }
+.value--small { font-size: 26px; }
+.divider { height: 3px; background: var(--ink); flex: none; }
+.divider--thin { height: 2px; }
+
+/* Item: a bar of "meta" on the left, content on the right */
+.item { display: flex; gap: 12px; align-items: stretch; }
+.item .meta { width: 7px; flex: none; background: var(--ink); }
+.item .content { display: flex; flex-direction: column; gap: 4px; min-width: 0; }
+.clamp-1, .clamp-2, .clamp-3, .clamp-4 { display: -webkit-box; -webkit-box-orient: vertical; overflow: hidden; }
+.clamp-1 { -webkit-line-clamp: 1; } .clamp-2 { -webkit-line-clamp: 2; }
+.clamp-3 { -webkit-line-clamp: 3; } .clamp-4 { -webkit-line-clamp: 4; }
+
+/* Utilities */
+.flex { display: flex; } .col { flex-direction: column; } .between { justify-content: space-between; }
+.center-y { align-items: center; } .end { align-items: flex-end; } .grow { flex: 1; min-height: 0; }
+.gap-s { gap: 6px; } .gap-m { gap: 12px; } .gap-l { gap: 20px; }
+.right { text-align: right; }
+.bullets { list-style: none; display: flex; flex-direction: column; gap: 9px; }
+.bullets li { position: relative; padding-left: 22px; font-size: 18.5px; font-weight: 500; line-height: 1.32; }
+.bullets li::before { content: ""; position: absolute; left: 2px; top: .5em; width: 9px; height: 9px; background: var(--ink); }

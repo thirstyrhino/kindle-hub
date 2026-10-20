@@ -1,0 +1,6 @@
+name: morning_brief
+title: Morning Brief
+order: 30            # after weather and markets, so the AI can use them
+show:
+  - "05:30-10:00"
+  - "13:00-14:00"    # a midday reminder of what mattered this morning

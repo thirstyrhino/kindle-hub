@@ -1,0 +1,7 @@
+name: weather_aqi
+title: Weather & Air
+order: 10            # fetched first so the brief can mention it
+show:                # IST windows when this screen is on the Kindle
+  - "10:00-13:00"
+  - "16:00-23:59"
+  - "00:00-05:59"
