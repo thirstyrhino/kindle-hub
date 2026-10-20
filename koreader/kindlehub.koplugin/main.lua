@@ -11,8 +11,12 @@ Getting there fast:
   * Two gesture actions: "Kindle Hub: Show current screen" and "Kindle Hub: Pick a screen".
   * The last list and every screen are cached, so the screen appears at once, even offline, and
     is then refreshed when Wi-Fi is up.
-  * With the Bookshelf plugin, Kindle Hub cards on its home screen (bookshelf_card.lua). This
-    plugin keeps a small loader for that card in settings/bookshelf/micromodules/.
+  * While the screen is open it keeps itself up to date (every 15 minutes, and after waking),
+    following what's on now until you swipe to another screen.
+  * With the Bookshelf plugin, Bookshelf's dashboard button opens the Kindle Hub screen instead
+    of Bookshelf's cards (Tools → Kindle Hub to switch back). Kindle Hub cards for Bookshelf's
+    home screen are in bookshelf_card.lua; this plugin keeps a small loader for them in
+    settings/bookshelf/micromodules/.
 ]]
 
 local ButtonDialog = require("ui/widget/buttondialog")
@@ -39,6 +43,9 @@ local DEFAULT_SITE = "https://thirstyrhino.github.io/kindle-hub"
 local USER_AGENT = "kindlehub-koreader/1.2"
 local START_KEY = "kindlehub_start_with"          -- "always" | "launcher" | "never"
 local FLAG_NAME = "kindlehub.launch"               -- written by the KUAL button, in the settings dir
+local DASH_KEY = "kindlehub_bookshelf_dashboard"   -- false: leave Bookshelf's dashboard alone
+local REFRESH_EVERY = 15 * 60   -- while open, check the site this often (it rebuilds hourly)
+local RETRY_OFFLINE = 2 * 60    -- ...or this often while Wi-Fi is off
 
 -- Plugins are re-created every time KOReader switches between the file browser and a book;
 -- this module-level flag makes "open on start" happen once per KOReader run.
@@ -107,6 +114,7 @@ function KindleHub:init()
     if not started then
         started = true
         pcall(self.installCard, self)
+        pcall(self.hookBookshelfDashboard, self)
         if self:shouldOpenOnStart() then
             -- Let KOReader finish drawing its first screen, then cover it.
             UIManager:nextTick(function() self:showNow() end)
@@ -222,6 +230,7 @@ end
 -- Screen `name` (default: the one on now): the saved copy straight away (no waiting on
 -- Wi-Fi), then the fresh one once connected.
 function KindleHub:showNow(name)
+    self.follow_on_air = (name == nil)    -- keep following what's on now, until a swipe
     local cached = self:cachedList()
     local shown = nil
     local i = cached and pickIndex(cached, name)
@@ -276,6 +285,65 @@ function KindleHub:installCard()
     return true
 end
 
+function KindleHub:dashboardOn()
+    return G_reader_settings:readSetting(DASH_KEY) ~= false
+end
+
+-- Bookshelf's dashboard (its full-screen card view) opens the Kindle Hub screen instead.
+-- Bookshelf opens it in one place, MicroFullscreen.open (footer button, gesture, from a book);
+-- that is wrapped once per KOReader run. If Kindle Hub has nothing to show yet (no saved
+-- screen and no Wi-Fi), or the option is off, Bookshelf's own dashboard opens as usual.
+function KindleHub:hookBookshelfDashboard()
+    local ok, Dash = pcall(require, "lib/bookshelf_micro_fullscreen")
+    if not ok or type(Dash) ~= "table" or type(Dash.open) ~= "function" then return false end
+    if Dash._kindlehub_original_open then return true end
+    local original = Dash.open
+    Dash._kindlehub_original_open = original
+    Dash.open = function(...)
+        local api = package.loaded["kindlehub/api"]
+        if api and api.dashboard then
+            local ok_show, shown = pcall(api.dashboard)
+            if ok_show and shown then return nil end
+        end
+        return original(...)
+    end
+    return true
+end
+
+-- While the screen is open: check the site every REFRESH_EVERY seconds and swap in a newer
+-- picture (what's on now, or the screen you swiped to). Nothing redraws when nothing changed.
+function KindleHub:scheduleRefresh(seconds)
+    if not self.refresh_task then
+        self.refresh_task = function() self:refreshOpenScreen() end
+    end
+    UIManager:unschedule(self.refresh_task)
+    UIManager:scheduleIn(seconds, self.refresh_task)
+end
+
+function KindleHub:stopRefresh()
+    if self.refresh_task then UIManager:unschedule(self.refresh_task) end
+end
+
+function KindleHub:refreshOpenScreen()
+    if not (self.image_widget and self.screens and self.index) then return end
+    if not NetworkMgr:isConnected() then return self:scheduleRefresh(RETRY_OFFLINE) end
+    local current = self.screens[self.index].name
+    local data = self:fetchList()
+    if data and not data.offline and self.image_widget then
+        local i = self.follow_on_air and pickIndex(data, nil) or indexOf(data, current)
+        if i and data.screens[i].image_url ~= self.shown_url then
+            self.screens = data.screens
+            self:showScreen(i, true)    -- a failed download changes nothing; tried again next time
+        end
+    end
+    if self.image_widget then self:scheduleRefresh(REFRESH_EVERY) end
+end
+
+-- After the Kindle wakes up, catch up once Wi-Fi is back.
+function KindleHub:onResume()
+    if self.image_widget then self:scheduleRefresh(10) end
+end
+
 -- Menu → Pick a screen: fetch the list, then offer one button per screen.
 function KindleHub:pick()
     NetworkMgr:runWhenConnected(function()
@@ -293,6 +361,7 @@ function KindleHub:pick()
             local label = s.title .. (s.name == data.on_air and "  ·  on now" or "")
             table.insert(buttons, {{ text = label, align = "left", callback = function()
                 UIManager:close(dialog)
+                self.follow_on_air = false
                 self:showScreen(i)
             end }})
         end
@@ -312,8 +381,9 @@ function KindleHub:imagePath(s)
 end
 
 -- Download screen i to its cache file (via a temporary file, so a failed download never
--- destroys the saved copy), then show it. Falls back to the saved copy when offline.
-function KindleHub:showScreen(i)
+-- destroys the saved copy), then show it. Falls back to the saved copy when offline, unless
+-- only_if_new (background refresh), when a failed download leaves the screen as it is.
+function KindleHub:showScreen(i, only_if_new)
     local n = #self.screens
     i = ((i - 1) % n) + 1   -- swiping past either end wraps around
     local s = self.screens[i]
@@ -333,10 +403,12 @@ function KindleHub:showScreen(i)
     else
         os.remove(part)
     end
+    if not ok and only_if_new then return end
     if not ok and not exists(path) then
         return self:showError(s.title .. ": " .. (err or "download failed"))
     end
     self:display(i, path)
+    if ok and self.image_widget then self.shown_url = s.image_url end
 end
 
 function KindleHub:display(i, path)
@@ -348,18 +420,23 @@ function KindleHub:display(i, path)
     -- Swap only after the new screen rendered, so a failed download never leaves a blank page.
     if self.image_widget then UIManager:close(self.image_widget) end
     self.index = i
+    self.shown_url = nil                -- a saved copy until showScreen says it downloaded
     self.image_widget = self:wrap(ImageWidget:new{
         image = bb, image_disposable = true, width = w, height = h, alpha = true,
     }, w, h)
     UIManager:show(self.image_widget)
     UIManager:setDirty(self.image_widget, "full")
+    self:scheduleRefresh(REFRESH_EVERY)
 end
 
 function KindleHub:wrap(image, w, h)
     local widget = InputContainer:new{ dimen = Geom:new{ x = 0, y = 0, w = w, h = h }, image }
     local function close()
         UIManager:close(widget)
-        if self.image_widget == widget then self.image_widget = nil end
+        if self.image_widget == widget then
+            self.image_widget = nil
+            self:stopRefresh()
+        end
         return true
     end
     widget.onKHClose = close
@@ -368,15 +445,25 @@ function KindleHub:wrap(image, w, h)
     widget.onKHSwipe = function(_, _, ges)
         local dir = ges and ges.direction or ""
         if dir:find("west") then
+            self.follow_on_air = false
             self:showScreen(self.index + 1)
         elseif dir:find("east") then
+            self.follow_on_air = false
             self:showScreen(self.index - 1)
         end
         return true
     end
     widget.onKHKey = function(_, _, key)
-        if key:match({ Input.group.PgFwd }) then self:showScreen(self.index + 1) return true end
-        if key:match({ Input.group.PgBack }) then self:showScreen(self.index - 1) return true end
+        if key:match({ Input.group.PgFwd }) then
+            self.follow_on_air = false
+            self:showScreen(self.index + 1)
+            return true
+        end
+        if key:match({ Input.group.PgBack }) then
+            self.follow_on_air = false
+            self:showScreen(self.index - 1)
+            return true
+        end
         return close()
     end
     if Device:isTouchDevice() then
@@ -427,6 +514,17 @@ API.show = function(name)
     local viewer = API.plugin or setmetatable({}, { __index = KindleHub })
     viewer:showNow(name)
 end
+-- Bookshelf's dashboard button: open what's on now and return true, or return false to let
+-- Bookshelf open its own dashboard (option off, or nothing saved and no Wi-Fi).
+API.dashboard = function()
+    if not KindleHub:dashboardOn() then return false end
+    local data = KindleHub:cachedList()
+    local i = data and pickIndex(data, nil)
+    local saved = i and exists(KindleHub:imagePath(data.screens[i]))
+    if not saved and not NetworkMgr:isConnected() then return false end
+    API.show(nil)
+    return true
+end
 
 function KindleHub:onKindleHubPick()
     self:pick()
@@ -448,6 +546,12 @@ function KindleHub:addToMainMenu(menu_items)
         sub_item_table = {
             { text = _("Show current screen"), callback = function() self:showNow() end },
             { text = _("Pick a screen"), callback = function() self:pick() end, separator = true },
+            {
+                text = _("Bookshelf's dashboard shows Kindle Hub"),
+                help_text = _("Bookshelf's dashboard button opens the Kindle Hub screen instead of Bookshelf's cards."),
+                checked_func = function() return self:dashboardOn() end,
+                callback = function() G_reader_settings:saveSetting(DASH_KEY, not self:dashboardOn()) end,
+            },
             {
                 text = _("Open when KOReader starts"),
                 sub_item_table = {

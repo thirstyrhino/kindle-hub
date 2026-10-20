@@ -162,37 +162,49 @@ right for the other screens, tap to close and you're in KOReader as usual.
 - **Tools → Kindle Hub → Pick a screen** lists every screen from the latest run.
 - **Works offline.** It keeps the last copy of every screen and shows it at once, then swaps in
   the fresh one when Wi-Fi connects.
+- **Stays fresh while open.** It checks the site every 15 minutes and follows what's on now
+  until you swipe to another screen.
 
 It uses the TRMNL plugin's Base URL, and the hourly dashboard keeps its own schedule.
 
-### 5. Kindle: Kindle Hub cards on your Bookshelf home screen
+### 5. Kindle: Kindle Hub as Bookshelf's dashboard
 
 If you use [Bookshelf](https://github.com/AndyHazz/bookshelf.koplugin) as KOReader's home screen,
-Kindle Hub screens can sit on its dashboard as cards, next to the clock, reading stats and
-reading goal.
+its dashboard button opens the Kindle Hub screen instead of Bookshelf's own cards (clock,
+reading stats, reading goal).
+
+1. Install the Kindle Hub plugin (step 4, item 1) and restart KOReader. That's all.
+2. Tap Bookshelf's dashboard button: you get the screen that's on now, full size.
+
+- **Swipe** left or right for the other screens. **Tap** to go back to your books.
+- **Stays up to date while it's open.** It checks the site every 15 minutes (the site rebuilds
+  hourly) and swaps in the new screen as the day moves on: brief in the morning, weather at
+  midday, markets in the afternoon. After a swipe it keeps the screen you chose fresh instead.
+  When the Kindle wakes up, it catches up within seconds.
+- **Offline**, it shows the last saved copy. If there's nothing saved yet and no Wi-Fi,
+  Bookshelf's own dashboard opens instead.
+- **As a desk display that never sleeps,** use the same two settings as the TRMNL dashboard:
+  **Tools → More tools → Keep alive: on** and **Settings → Device → Auto suspend: off**, and keep
+  the Kindle on a charger.
+- **To get Bookshelf's cards back:** **Tools → Kindle Hub → Bookshelf's dashboard shows Kindle
+  Hub** (untick).
+
+<details>
+<summary>Optional: Kindle Hub cards inside Bookshelf's dashboard</summary>
+
+If you'd rather keep Bookshelf's dashboard (untick the option above) and mix in Kindle Hub, each
+screen can also be a card there.
 
 <p align="center"><img src="docs/images/bookshelf-cards.png" width="300" alt="Mock-up of Bookshelf's dashboard with a clock card and Kindle Hub cards for weather, quarter progress, the morning brief and year of the day"><br><sub>Mock-up from the sample data. On the Kindle, Bookshelf sizes the cards to fit.</sub></p>
 
-1. Install the Kindle Hub plugin (step 4, item 1) and restart KOReader once. It adds its card
-   to Bookshelf by itself.
-2. On Bookshelf's dashboard, long-press any card, tap the **⊕** (add) button and choose
-   **Kindle Hub** from the cards.
-3. Pick what the card shows: one screen (Weather & Air, Quarter Progress, Morning Brief…) or
-   **What's on now**, which follows the dashboard schedule through the day. Add one card per
-   screen you want.
+On the dashboard, long-press any card, tap **⊕** (add) and choose **Kindle Hub**, then pick a
+screen or **What's on now**. Tap a card to open that screen full size; long-press →
+**Module settings…** to change it. Cards update when Wi-Fi is already on. The cards show the
+short summary each screen publishes (see `tile()` in [Build your own screen](#build-your-own-screen)).
+The plugin keeps a two-line loader for them in `koreader/settings/bookshelf/micromodules/`; the
+code is [`bookshelf_card.lua`](koreader/kindlehub.koplugin/bookshelf_card.lua).
 
-- **Tap a card** to open that screen full size. Swipe for the others, tap to come back.
-- **Long-press → Module settings…** to change the screen or refresh now.
-- **Updates itself** when Wi-Fi is already on (it never turns Wi-Fi on just to draw the home
-  screen), and keeps the last copy for when it's off.
-- If Bookshelf opens on its dashboard, you may want **Tools → Kindle Hub → Open when KOReader
-  starts → Never**, so KOReader opens on the cards instead of a full-screen picture.
-
-The cards show a short summary each screen publishes in `api/screens` (see `tile()` in
-[Build your own screen](#build-your-own-screen)). The plugin keeps a two-line loader in
-`koreader/settings/bookshelf/micromodules/kindlehub.lua`; the card's code is
-[`bookshelf_card.lua`](koreader/kindlehub.koplugin/bookshelf_card.lua) in the plugin folder.
-
+</details>
 
 ---
 
