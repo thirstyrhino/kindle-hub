@@ -43,12 +43,13 @@ def fetch(ctx):
     today = ctx.now.date()
     q, start, end, fy_end_year = _quarter(today, fy_start)
     total = (end - start).days + 1
-    passed = (today - start).days                    # whole days already behind you
+    day = (today - start).days + 1                   # today's position in the quarter (1-based)
+    passed = day                                     # today counts as passed
     label = f"Q{q} {start.year}" if fy_start == 1 else f"Q{q} FY{str(fy_end_year)[-2:]}"
 
     screen_w = ctx.cfg["screen"]["width"]
     cols, size = _grid(total, screen_w - 2 * PAD, ctx.cfg["screen"]["height"] - CHROME)
-    days = ["past"] * passed + ["today"] + ["future"] * (total - passed - 1)
+    days = ["past"] * (day - 1) + ["today"] + ["future"] * (total - day)
     return {
         "available": True,
         "quarter": label,
