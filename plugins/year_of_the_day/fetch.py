@@ -76,7 +76,7 @@ def _scene(ctx, main: dict, mode: str) -> str:
         "Describe only what is seen: setting, objects, era details, mood. Reply with JSON only.",
         f"Event in {main['label']}: {main['text']}\nBackground: {main['extract']}\n"
         f"Style: {mode}. {RULES}\n"
-        'Return {"scene": "one sentence, max 45 words"}', max_tokens=200)
+        'Return {"scene": "one sentence, max 45 words"}', max_tokens=1500)
     scene = fmt.strip_html(str((ai or {}).get("scene", "")), 400)
     return scene or fallback
 
@@ -94,8 +94,7 @@ def _illustrate(ctx, main: dict, mode: str) -> Path | None:
             ctx.log("year_of_the_day: reusing today's illustration")
             return out
     prompt = f"{STYLES[mode]} Scene: {_scene(ctx, main, mode)} {RULES}"
-    raw = imagegen.generate(ctx, prompt, model=ctx.settings.get("image_model") or imagegen.DEFAULT_MODEL,
-                            seed=int(ctx.today.replace("-", "")) % 1_000_000)
+    raw = imagegen.generate(ctx, prompt, model=ctx.settings.get("image_model") or imagegen.DEFAULT_MODEL)
     if not raw:
         return None
     try:

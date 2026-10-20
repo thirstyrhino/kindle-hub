@@ -21,7 +21,7 @@ def configured() -> bool:
     return bool(os.environ.get("CLOUDFLARE_ACCOUNT_ID") and os.environ.get("CLOUDFLARE_API_TOKEN"))
 
 
-def generate(ctx: Context, prompt: str, model: str = DEFAULT_MODEL, seed: int | None = None) -> bytes | None:
+def generate(ctx: Context, prompt: str, model: str = DEFAULT_MODEL) -> bytes | None:
     """Returns encoded image bytes (JPEG/PNG), or None if not configured or the call fails."""
     if ctx.demo:
         try:
@@ -34,9 +34,7 @@ def generate(ctx: Context, prompt: str, model: str = DEFAULT_MODEL, seed: int | 
         ctx.log("image: CLOUDFLARE_ACCOUNT_ID / CLOUDFLARE_API_TOKEN not set; using the text layout")
         return None
     url = os.environ.get("CLOUDFLARE_AI_URL") or API.format(account=os.environ["CLOUDFLARE_ACCOUNT_ID"], model=model)
-    body = {"prompt": prompt[:2048], "steps": 8}
-    if seed is not None:
-        body["seed"] = seed
+    body = {"prompt": prompt[:2048], "steps": 8}   # flux-1-schnell rejects a "seed" field (HTTP 400)
     for attempt in (1, 2):
         try:
             r = ctx.session.post(url, json=body, timeout=120,

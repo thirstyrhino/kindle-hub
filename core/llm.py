@@ -65,7 +65,7 @@ def extract_json(text: str) -> Any:
     return json.loads(text[start:end + 1])
 
 
-def generate_json(ctx: Context, system: str, user: str, max_tokens: int = 1400) -> tuple[dict | None, str | None]:
+def generate_json(ctx: Context, system: str, user: str, max_tokens: int = 4000) -> tuple[dict | None, str | None]:
     """Returns (parsed_json, model_used). (None, None) when no key, no models or every attempt fails."""
     key = os.environ.get("OPENROUTER_API_KEY", "").strip()
     ctx.note("openrouter", key_present=bool(key))
@@ -101,8 +101,15 @@ def generate_json(ctx: Context, system: str, user: str, max_tokens: int = 1400) 
                 ctx.note("openrouter", error=f"{attempt} -> HTTP {r.status_code}: {r.text[:200]}")
                 continue
             payload = r.json()
-            content = payload["choices"][0]["message"].get("content") or ""
-            parsed = extract_json(content)
+            choice = payload["choices"][0]
+            content = choice["message"].get("content") or ""
+            try:
+                parsed = extract_json(content)
+            except ValueError as e:
+                # Usually a thinking model running out of room: say how it ended and what came back.
+                ctx.note("openrouter", error=f"{payload.get('model') or attempt}: {e}; finish_reason="
+                                             f"{choice.get('finish_reason')}; {len(content)} chars: {content[:120]!r}")
+                continue
             if isinstance(parsed, dict):
                 used = payload.get("model") or attempt.get("model") or models[0]
                 ctx.note("openrouter", ok=True, model_used=used)
